@@ -8,6 +8,7 @@ using NosSmooth.LocalBinding.Options;
 using NosSmooth.LocalBinding.Structs;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.X86;
+using Reloaded.Memory.Sources;
 using Remora.Results;
 
 namespace NosSmooth.LocalBinding.Objects;
@@ -17,6 +18,8 @@ namespace NosSmooth.LocalBinding.Objects;
 /// </summary>
 public class PetManagerBinding
 {
+    private readonly IMemory _memory;
+
     /// <summary>
     /// Create nostale pet manager binding.
     /// </summary>
@@ -28,12 +31,13 @@ public class PetManagerBinding
         (NosBindingManager bindingManager, PetManagerList petManagerList, PetManagerBindingOptions options)
     {
         var petManager = new PetManagerBinding(petManagerList);
+        var petManager = new PetManagerBinding(bindingManager.Memory, petManagerList);
         var hookResult = bindingManager.CreateHookFromPattern<PetWalkDelegate>
         (
             "PetManagerBinding.PetWalk",
             petManager.PetWalkDetour,
             options.PetWalkPattern,
-            hook: options.HookPetWalk
+            enableHook: options.HookPetWalk
         );
 
         if (!hookResult.IsSuccess)
@@ -62,10 +66,19 @@ public class PetManagerBinding
 
     private IHook<PetWalkDelegate> _petWalkHook = null!;
 
-    private PetManagerBinding(PetManagerList petManagerList)
+    private PetManagerBinding(IMemory memory, PetManagerList petManagerList)
     {
+        _memory = memory;
         PetManagerList = petManagerList;
     }
+
+    /// <summary>
+    /// Event that is called when walk was called by NosTale.
+    /// </summary>
+    /// <remarks>
+    /// The walk must be hooked for this event to be called.
+    /// </remarks>
+    public event Func<PetManager, ushort, ushort, bool>? PetWalkCall;
 
     /// <summary>
     /// Gets the hook of the pet walk function.
@@ -117,13 +130,19 @@ public class PetManagerBinding
         int unknown2 = 1
     )
     {
-        return _petWalkHook.OriginalFunction
-        (
-            petManagerPtr,
-            position,
-            unknown0,
-            unknown1,
-            unknown2
-        );
+        var result = PetWalkCall?.Invoke(new PetManager(_memory, petManagerPtr), (ushort)(position & 0xFFFF), (ushort)((position >> 16) & 0xFFFF));
+        if (result ?? true)
+        {
+            return _petWalkHook.OriginalFunction
+            (
+                petManagerPtr,
+                position,
+                unknown0,
+                unknown1,
+                unknown2
+            );
+        }
+
+        return false;
     }
 }
