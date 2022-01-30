@@ -32,6 +32,7 @@ public class NostaleLocalClient : BaseNostaleClient
 {
     private readonly NetworkBinding _networkBinding;
     private readonly PlayerManagerBinding _playerManagerBinding;
+    private readonly PetManagerBinding _petManagerBinding;
     private readonly ControlCommands _controlCommands;
     private readonly IPacketSerializer _packetSerializer;
     private readonly IPacketHandler _packetHandler;
@@ -46,6 +47,7 @@ public class NostaleLocalClient : BaseNostaleClient
     /// </summary>
     /// <param name="networkBinding">The network binding.</param>
     /// <param name="playerManagerBinding">The player manager binding.</param>
+    /// <param name="petManagerBinding">The pet manager binding.</param>
     /// <param name="controlCommands">The control commands.</param>
     /// <param name="commandProcessor">The command processor.</param>
     /// <param name="packetSerializer">The packet serializer.</param>
@@ -57,6 +59,7 @@ public class NostaleLocalClient : BaseNostaleClient
     (
         NetworkBinding networkBinding,
         PlayerManagerBinding playerManagerBinding,
+        PetManagerBinding petManagerBinding,
         ControlCommands controlCommands,
         CommandProcessor commandProcessor,
         IPacketSerializer packetSerializer,
@@ -70,6 +73,7 @@ public class NostaleLocalClient : BaseNostaleClient
         _options = options.Value;
         _networkBinding = networkBinding;
         _playerManagerBinding = playerManagerBinding;
+        _petManagerBinding = petManagerBinding;
         _controlCommands = controlCommands;
         _packetSerializer = packetSerializer;
         _packetHandler = packetHandler;
@@ -87,6 +91,7 @@ public class NostaleLocalClient : BaseNostaleClient
 
         _playerManagerBinding.FollowEntityCall += FollowEntity;
         _playerManagerBinding.WalkCall += Walk;
+        _petManagerBinding.PetWalkCall += PetWalk;
 
         try
         {
@@ -101,6 +106,7 @@ public class NostaleLocalClient : BaseNostaleClient
         _networkBinding.PacketReceive -= ReceiveCallback;
         _playerManagerBinding.FollowEntityCall -= FollowEntity;
         _playerManagerBinding.WalkCall -= Walk;
+        _petManagerBinding.PetWalkCall -= PetWalk;
 
         return Result.FromSuccess();
     }
@@ -207,6 +213,11 @@ public class NostaleLocalClient : BaseNostaleClient
                 (ControlCommandsFilter.UserCancellable, false, (CancellationToken)_stopRequested!)
         );
         return true;
+    }
+
+    private bool PetWalk(PetManager petManager, ushort x, ushort y)
+    {
+        return _controlCommands.AllowUserActions;
     }
 
     private bool Walk(ushort x, ushort y)
