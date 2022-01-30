@@ -175,27 +175,35 @@ public class NostaleLocalClient : BaseNostaleClient
 
     private async Task ProcessPacketAsync(PacketSource type, string packetString)
     {
-        var packet = _packetSerializer.Deserialize(packetString, type);
-        if (!packet.IsSuccess)
+        var packetResult = _packetSerializer.Deserialize(packetString, type);
+        IPacket packet;
+        if (!packetResult.IsSuccess)
         {
-            if (packet.Error is not PacketConverterNotFoundError)
+            if (packetResult.Error is not PacketConverterNotFoundError)
             {
                 _logger.LogWarning("Could not parse {Packet}. Reason:", packetString);
-                _logger.LogResultError(packet);
+                _logger.LogResultError(packetResult);
+                packet = new ParsingFailedPacket(packetResult, packetString);
             }
-
-            packet = new ParsingFailedPacket(packet, packetString);
+            else
+            {
+                packet = new UnresolvedPacket(packetString.Split(' ')[0], packetString);
+            }
+        }
+        else
+        {
+            packet = packetResult.Entity;
         }
 
         Result result;
         if (type == PacketSource.Server)
         {
             result = await _packetHandler.HandleReceivedPacketAsync
-                (packet.Entity, packetString, _stopRequested ?? default);
+                (packet, packetString, _stopRequested ?? default);
         }
         else
         {
-            result = await _packetHandler.HandleSentPacketAsync(packet.Entity, packetString, _stopRequested ?? default);
+            result = await _packetHandler.HandleSentPacketAsync(packet, packetString, _stopRequested ?? default);
         }
 
         if (!result.IsSuccess)
