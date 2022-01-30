@@ -338,7 +338,7 @@ public class NosBindingManager : IDisposable
     /// <param name="callbackFunction">The callback function to call instead of the original one.</param>
     /// <param name="pattern">The pattern.</param>
     /// <param name="offset">The offset from the pattern.</param>
-    /// <param name="hook">Whether to activate the hook.</param>
+    /// <param name="enableHook">Whether to activate the hook.</param>
     /// <typeparam name="TFunction">The type of the function.</typeparam>
     /// <returns>The hook object or an error.</returns>
     internal Result<IHook<TFunction>> CreateHookFromPattern<TFunction>
@@ -347,7 +347,7 @@ public class NosBindingManager : IDisposable
         TFunction callbackFunction,
         string pattern,
         int offset = 0,
-        bool hook = true
+        bool enableHook = true
     )
     {
         var walkFunctionAddress = Scanner.CompiledFindPattern(pattern);
@@ -358,14 +358,17 @@ public class NosBindingManager : IDisposable
 
         try
         {
-            return Result<IHook<TFunction>>.FromSuccess
+            var hook = Hooks.CreateHook
             (
-                Hooks.CreateHook
-                (
-                    callbackFunction,
-                    walkFunctionAddress.Offset + (int)_browserManager.Process.MainModule!.BaseAddress
-                )
+                callbackFunction,
+                walkFunctionAddress.Offset + (int)_browserManager.Process.MainModule!.BaseAddress + offset
             );
+            if (enableHook)
+            {
+                hook.Activate();
+            }
+
+            return Result<IHook<TFunction>>.FromSuccess(hook);
         }
         catch (Exception e)
         {
