@@ -78,7 +78,7 @@ public class ChatCommandInterceptor : IPacketInterceptor
         {
             _logger.LogError($"Could not prepare \"{command}\"");
             _logger.LogResultError(preparedResult);
-            await _feedbackService.SendErrorMessageAsync($"Could not prepare the given command. {preparedResult.Error.Message}");
+            await _feedbackService.SendErrorMessageAsync($"Could not prepare the given command. {preparedResult.ToFullString()}");
         }
 
         var executeResult = await _commandService.TryExecuteAsync(preparedResult.Entity, _serviceProvider);
@@ -86,7 +86,14 @@ public class ChatCommandInterceptor : IPacketInterceptor
         {
             _logger.LogError($"Could not execute \"{command}\"");
             _logger.LogResultError(executeResult);
-            await _feedbackService.SendErrorMessageAsync($"Could not execute the given command. {executeResult.Error.Message}");
+            await _feedbackService.SendErrorMessageAsync($"Could not execute the given command. {executeResult.ToFullString()}");
+        }
+
+        if (!executeResult.Entity.IsSuccess)
+        {
+            _logger.LogError($"There was an error while handling \"{command}\"");
+            _logger.LogResultError(executeResult.Entity);
+            await _feedbackService.SendErrorMessageAsync($"Could not execute the given command. {executeResult.Entity.ToFullString()}");
         }
     }
 }
