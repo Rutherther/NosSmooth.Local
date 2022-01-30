@@ -98,12 +98,12 @@ load_assembly_and_get_function_pointer_fn get_dotnet_load_assembly(const char_t*
     return (load_assembly_and_get_function_pointer_fn)load_assembly_and_get_function_pointer;
 }
 
-bool LoadAndCallMethod(LoadParams* params)
+int LoadAndCallMethod(LoadParams* params)
 {
     if (!load_hostfxr())
     {
         assert(false && "Failure: load_hostfxr()");
-        return false;
+        return 0;
     }
 
     load_assembly_and_get_function_pointer_fn load_assembly_and_get_function_pointer = nullptr;
@@ -121,5 +121,5 @@ bool LoadAndCallMethod(LoadParams* params)
         (void**)&main);
     assert(rc == 0 && main != nullptr && "Failure: load_assembly_and_get_function_pointer()");
     main();
-    return true;
+    return 1;
 }

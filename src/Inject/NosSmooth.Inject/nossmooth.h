@@ -12,4 +12,4 @@ struct LoadParams
 #pragma pack(pop)
 #define DllExport extern "C" __declspec( dllexport )
 
-DllExport bool LoadAndCallMethod(LoadParams* params);
+DllExport int LoadAndCallMethod(LoadParams* params);
