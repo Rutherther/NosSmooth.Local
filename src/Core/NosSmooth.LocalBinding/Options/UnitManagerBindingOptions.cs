@@ -17,13 +17,13 @@ public class UnitManagerBindingOptions
     /// Gets or sets the pattern to static address of unit manager.
     /// </summary>
     public string UnitManagerPattern { get; set; }
-        = "TODO";
+        = "A1 ?? ?? ?? ?? E8 ?? ?? ?? ?? 33 C0 5A 59 59 64 89 10 68 ?? ?? ?? ?? 8D 45 F0 BA";
 
     /// <summary>
     /// Gets or sets the pointer offsets from the unit manager static address.
     /// </summary>
     public int[] UnitManagerOffsets { get; set; }
-        = { 15 };
+        = { 1, 0 };
 
     /// <summary>
     /// Gets or sets the pattern to find the focus entity method at.
