@@ -12,4 +12,4 @@ namespace NosSmooth.Injector.Errors;
 /// The injection could not be finished successfully.
 /// </summary>
 /// <param name="DllPath">The path to the dll.</param>
-public record InjectionFailedError(string DllPath) : ResultError($"Could not inject {DllPath} dll into the process.");
+public record InjectionFailedError(string DllPath, string Reason) : ResultError($"Could not inject {DllPath} dll into the process. {Reason}");

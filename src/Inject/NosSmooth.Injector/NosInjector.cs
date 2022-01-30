@@ -5,6 +5,7 @@
 //  Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using Microsoft.Extensions.Options;
@@ -79,6 +80,11 @@ public class NosInjector
     {
         try
         {
+            if (!File.Exists(dllPath))
+            {
+                return new NotFoundError($"Could not find the managed dll file at \"{dllPath}\".");
+            }
+
             using var injector = new Reloaded.Injector.Injector(process);
             var memory = new ExternalMemory(process);
 
@@ -91,6 +97,11 @@ public class NosInjector
             var runtimePath = Path.Combine
                 (directoryName, Path.GetFileNameWithoutExtension(dllPath)) + ".runtimeconfig.json";
 
+            if (!File.Exists(runtimePath))
+            {
+                return new NotFoundError($"Could not find the runtimeconfig.json file at \"{runtimePath}\".");
+            }
+
             using var dllPathMemory = AllocateString(memory, dllPath);
             using var classPathMemory = AllocateString(memory, classPath);
             using var methodNameMemory = AllocateString(memory, methodName);
@@ -102,7 +113,7 @@ public class NosInjector
                 return new GenericError("Could not allocate memory in the external process.");
             }
 
-            var loadParams = new LoadParams()
+            var loadParams = new LoadParams
             {
                 LibraryPath = (int)dllPathMemory.Pointer,
                 MethodName = (int)methodNameMemory.Pointer,
@@ -111,16 +122,26 @@ public class NosInjector
             };
 
             var nosSmoothInjectPath = Path.GetFullPath(_options.NosSmoothInjectPath);
+            if (!File.Exists(nosSmoothInjectPath))
+            {
+                return new NotFoundError($"Could not find the dll to inject at \"{_options.NosSmoothInjectPath}\".");
+            }
+
             var injected = injector.Inject(nosSmoothInjectPath);
             if (injected == 0)
             {
-                return new InjectionFailedError(nosSmoothInjectPath);
+                return new InjectionFailedError
+                    (nosSmoothInjectPath, "Did you forget to copy nethost.dll into the process directory?");
             }
 
             var functionResult = injector.CallFunction(nosSmoothInjectPath, "LoadAndCallMethod", loadParams);
-            if (functionResult != 0)
+            if (functionResult != 1)
             {
-                return new InjectionFailedError(dllPath);
+                return new InjectionFailedError
+                (
+                    dllPath,
+                    $"Couldn't initialize the nethost or call the main function, did you specify the class and method correctly? Result: {functionResult}"
+                );
             }
 
             return Result.FromSuccess();
