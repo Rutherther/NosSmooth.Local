@@ -132,8 +132,7 @@ public class UnitManagerBinding
     {
         try
         {
-            var res = _originalFocusEntity(Address, entityAddress);
-            Console.WriteLine(res);
+            _originalFocusEntity(Address, entityAddress);
         }
         catch (Exception e)
         {
@@ -154,9 +153,7 @@ public class UnitManagerBinding
         var result = EntityFocus?.Invoke(obj);
         if (result ?? true)
         {
-            var res = _originalFocusEntity(unitManagerPtr, entityId);
-            Console.WriteLine(res);
-            return res;
+            return _originalFocusEntity(unitManagerPtr, entityId);
         }
 
         return 0;
