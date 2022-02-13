@@ -73,27 +73,39 @@ public class ChatCommandInterceptor : IPacketInterceptor
 
     private async Task ExecuteCommand(string command)
     {
-        var preparedResult = await _commandService.TryPrepareCommandAsync(command, _serviceProvider);
-        if (!preparedResult.IsSuccess)
+        try
         {
-            _logger.LogError($"Could not prepare \"{command}\"");
-            _logger.LogResultError(preparedResult);
-            await _feedbackService.SendErrorMessageAsync($"Could not prepare the given command. {preparedResult.ToFullString()}");
-        }
+            var preparedResult = await _commandService.TryPrepareCommandAsync(command, _serviceProvider);
+            if (!preparedResult.IsSuccess)
+            {
+                _logger.LogError($"Could not prepare \"{command}\"");
+                _logger.LogResultError(preparedResult);
+                await _feedbackService.SendErrorMessageAsync
+                    ($"Could not prepare the given command. {preparedResult.ToFullString()}");
+                return;
+            }
 
-        var executeResult = await _commandService.TryExecuteAsync(preparedResult.Entity, _serviceProvider);
-        if (!executeResult.IsSuccess)
-        {
-            _logger.LogError($"Could not execute \"{command}\"");
-            _logger.LogResultError(executeResult);
-            await _feedbackService.SendErrorMessageAsync($"Could not execute the given command. {executeResult.ToFullString()}");
-        }
+            var executeResult = await _commandService.TryExecuteAsync(preparedResult.Entity, _serviceProvider);
+            if (!executeResult.IsSuccess)
+            {
+                _logger.LogError($"Could not execute \"{command}\"");
+                _logger.LogResultError(executeResult);
+                await _feedbackService.SendErrorMessageAsync
+                    ($"Could not execute the given command. {executeResult.ToFullString()}");
+                return;
+            }
 
-        if (!executeResult.Entity.IsSuccess)
+            if (!executeResult.Entity.IsSuccess)
+            {
+                _logger.LogError($"There was an error while handling \"{command}\"");
+                _logger.LogResultError(executeResult.Entity);
+                await _feedbackService.SendErrorMessageAsync
+                    ($"Could not execute the given command. {executeResult.Entity.ToFullString()}");
+            }
+        }
+        catch (Exception e)
         {
-            _logger.LogError($"There was an error while handling \"{command}\"");
-            _logger.LogResultError(executeResult.Entity);
-            await _feedbackService.SendErrorMessageAsync($"Could not execute the given command. {executeResult.Entity.ToFullString()}");
+            _logger.LogError(e, "Could not execute a command");
         }
     }
 }
