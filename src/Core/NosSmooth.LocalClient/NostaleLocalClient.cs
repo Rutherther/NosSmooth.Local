@@ -199,11 +199,11 @@ public class NostaleLocalClient : BaseNostaleClient
         if (type == PacketSource.Server)
         {
             result = await _packetHandler.HandleReceivedPacketAsync
-                (packet, packetString, _stopRequested ?? default);
+                (this, packet, packetString, _stopRequested ?? default);
         }
         else
         {
-            result = await _packetHandler.HandleSentPacketAsync(packet, packetString, _stopRequested ?? default);
+            result = await _packetHandler.HandleSentPacketAsync(this, packet, packetString, _stopRequested ?? default);
         }
 
         if (!result.IsSuccess)
