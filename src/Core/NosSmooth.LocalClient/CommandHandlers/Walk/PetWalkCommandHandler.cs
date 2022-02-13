@@ -67,6 +67,7 @@ public class PetWalkCommandHandler : ICommandHandler<PetWalkCommand>
         (
             command.TargetX,
             command.TargetY,
+            command.ReturnDistanceTolerance,
             command,
             PetWalkControlGroup + "_" + command.PetSelector,
             ct

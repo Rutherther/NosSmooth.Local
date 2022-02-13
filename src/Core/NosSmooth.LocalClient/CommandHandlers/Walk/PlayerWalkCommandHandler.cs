@@ -11,7 +11,6 @@ using NosSmooth.Core.Commands.Control;
 using NosSmooth.Core.Commands.Walking;
 using NosSmooth.Core.Extensions;
 using NosSmooth.LocalBinding.Objects;
-using NosSmooth.LocalClient.CommandHandlers.Walk.Errors;
 using Remora.Results;
 
 namespace NosSmooth.LocalClient.CommandHandlers.Walk;
@@ -63,6 +62,7 @@ public class PlayerWalkCommandHandler : ICommandHandler<PlayerWalkCommand>
         (
             command.TargetX,
             command.TargetY,
+            command.ReturnDistanceTolerance,
             command,
             PlayerWalkControlGroup,
             ct

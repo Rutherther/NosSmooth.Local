@@ -187,9 +187,9 @@ public class PlayerManagerBinding
     /// <param name="x">The x coordinate.</param>
     /// <param name="y">The y coordinate.</param>
     /// <returns>A result that may or may not have succeeded.</returns>
-    public Result<bool> Walk(ushort x, ushort y)
+    public Result<bool> Walk(short x, short y)
     {
-        int param = (y << 16) | x;
+        int param = ((ushort)y << 16) | (ushort)x;
         try
         {
             return _originalWalk(PlayerManager.Address, param);

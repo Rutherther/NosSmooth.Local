@@ -7,9 +7,9 @@
 using NosSmooth.Core.Client;
 using NosSmooth.Core.Commands.Control;
 using NosSmooth.Core.Commands.Walking;
+using NosSmooth.Core.Errors;
 using NosSmooth.Core.Extensions;
 using NosSmooth.LocalBinding.Structs;
-using NosSmooth.LocalClient.CommandHandlers.Walk.Errors;
 using Remora.Results;
 
 namespace NosSmooth.LocalClient.CommandHandlers.Walk;
@@ -20,12 +20,13 @@ namespace NosSmooth.LocalClient.CommandHandlers.Walk;
 internal class ControlCommandWalkHandler
 {
     private readonly INostaleClient _nostaleClient;
-    private readonly Func<ushort, ushort, Result<bool>> _walkFunction;
+    private readonly Func<short, short, Result<bool>> _walkFunction;
     private readonly ControlManager _controlManager;
     private readonly WalkCommandHandlerOptions _options;
 
-    private ushort _x;
-    private ushort _y;
+    private short _x;
+    private short _y;
+    private ushort _tolerance;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ControlCommandWalkHandler"/> class.
@@ -37,7 +38,7 @@ internal class ControlCommandWalkHandler
     public ControlCommandWalkHandler
     (
         INostaleClient nostaleClient,
-        Func<ushort, ushort, Result<bool>> walkFunction,
+        Func<short, short, Result<bool>> walkFunction,
         ControlManager controlManager,
         WalkCommandHandlerOptions options
     )
@@ -53,12 +54,22 @@ internal class ControlCommandWalkHandler
     /// </summary>
     /// <param name="x">The x coordinate.</param>
     /// <param name="y">The y coordinate.</param>
+    /// <param name="tolerance">The distance tolerance when to return success.</param>
     /// <param name="command">The take control command.</param>
     /// <param name="groupName">The name of the take control group.</param>
     /// <param name="ct">The cancellation token for cancelling the operation.</param>
     /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-    public async Task<Result> HandleCommand(ushort x, ushort y, ITakeControlCommand command, string groupName, CancellationToken ct = default)
+    public async Task<Result> HandleCommand
+    (
+        short x,
+        short y,
+        ushort tolerance,
+        ITakeControlCommand command,
+        string groupName,
+        CancellationToken ct = default
+    )
     {
+        _tolerance = tolerance;
         _x = x;
         _y = y;
 
@@ -74,6 +85,7 @@ internal class ControlCommandWalkHandler
                 {
                     ControlCancelReason.AnotherTask => WalkUnfinishedReason.AnotherTask,
                     ControlCancelReason.UserAction => WalkUnfinishedReason.UserAction,
+                    ControlCancelReason.MapChanged => WalkUnfinishedReason.MapChanged,
                     _ => WalkUnfinishedReason.Unknown
                 };
                 return Task.FromResult(Result.FromSuccess());
@@ -86,7 +98,7 @@ internal class ControlCommandWalkHandler
             return commandResult;
         }
 
-        if (reason is null && !IsAt(x, y))
+        if (reason is null && !IsAt(x, y, _tolerance))
         {
             reason = WalkUnfinishedReason.PathNotFound;
         }
@@ -104,15 +116,17 @@ internal class ControlCommandWalkHandler
         );
     }
 
-    private bool IsAtTarget()
+    private bool IsAtTarget(ushort tolerance)
     {
-        return _controlManager.TargetX == _controlManager.Entity.X
-            && _controlManager.TargetY == _controlManager.Entity.Y;
+        return IsAt(_controlManager.TargetX, _controlManager.TargetY, tolerance);
     }
 
-    private bool IsAt(ushort x, ushort y)
+    private bool IsAt(int x, int y, ushort tolerance)
     {
-        return _controlManager.Entity.X == x && _controlManager.Entity.Y == y;
+        var xDiff = x - _controlManager.Entity.X;
+        var yDiff = y - _controlManager.Entity.Y;
+
+        return ((xDiff * xDiff) + (yDiff * yDiff)) < tolerance * tolerance;
     }
 
     private async Task<Result> WalkGrantedCallback(CancellationToken ct)
@@ -134,7 +148,7 @@ internal class ControlCommandWalkHandler
                 // ignored
             }
 
-            if (IsAtTarget() || IsAt(_x, _y))
+            if (IsAtTarget(_tolerance) || IsAt(_x, _y, _tolerance))
             {
                 return Result.FromSuccess();
             }

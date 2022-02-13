@@ -30,7 +30,6 @@ public class PetManagerBinding
     public static Result<PetManagerBinding> Create
         (NosBindingManager bindingManager, PetManagerList petManagerList, PetManagerBindingOptions options)
     {
-        var petManager = new PetManagerBinding(petManagerList);
         var petManager = new PetManagerBinding(bindingManager.Memory, petManagerList);
         var hookResult = bindingManager.CreateHookFromPattern<PetWalkDelegate>
         (
@@ -97,9 +96,9 @@ public class PetManagerBinding
     /// <param name="x">The x coordinate.</param>
     /// <param name="y">The y coordinate.</param>
     /// <returns>A result returned from NosTale or an error.</returns>
-    public Result<bool> PetWalk(int selector, ushort x, ushort y)
+    public Result<bool> PetWalk(int selector, short x, short y)
     {
-        uint position = ((uint)y << 16) | x;
+        uint position = Convert.ToUInt32(((ushort)y << 16) | (ushort)x);
         if (PetManagerList.Length < selector + 1)
         {
             return new NotFoundError("Could not find the pet using the given selector.");
