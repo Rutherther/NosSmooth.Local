@@ -124,7 +124,7 @@ public class SceneManager
     /// </summary>
     /// <param name="id">The id of the entity.</param>
     /// <returns>The pointer to the entity or an error.</returns>
-    public Result<MapBaseObj?> FindEntity(int id)
+    public Result<MapBaseObj?> FindEntity(long id)
     {
         if (id == 0)
         {
