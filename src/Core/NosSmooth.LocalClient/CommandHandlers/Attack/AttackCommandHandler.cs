@@ -62,15 +62,22 @@ public class AttackCommandHandler : ICommandHandler<AttackCommand>
             }
         );
 
-        var result = await _nostaleClient.SendCommandAsync(takeControlCommand, ct);
-        if (!result.IsSuccess)
+        try
         {
-            return result;
-        }
+            var result = await _nostaleClient.SendCommandAsync(takeControlCommand, ct);
+            if (!result.IsSuccess)
+            {
+                return result;
+            }
 
-        if (reason is not null)
+            if (reason is not null)
+            {
+                return new GenericError($"The command could not finish, because {reason}");
+            }
+        }
+        catch (TaskCanceledException)
         {
-            return new GenericError($"The command could not finish, because {reason}");
+            // ignored
         }
 
         return Result.FromSuccess();
