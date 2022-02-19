@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using NosSmooth.Core.Client;
 using NosSmooth.Core.Extensions;
 using NosSmooth.LocalBinding.Extensions;
+using NosSmooth.LocalClient.CommandHandlers.Attack;
 using NosSmooth.LocalClient.CommandHandlers.Walk;
 
 namespace NosSmooth.LocalClient.Extensions;
@@ -29,6 +30,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddNostaleBindings();
         serviceCollection
             .AddTakeControlCommand()
+            .AddCommandHandler<AttackCommandHandler>()
             .AddCommandHandler<PlayerWalkCommandHandler>()
             .AddCommandHandler<PetWalkCommandHandler>();
         serviceCollection.TryAddSingleton<NostaleLocalClient>();
