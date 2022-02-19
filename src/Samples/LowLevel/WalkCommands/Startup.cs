@@ -9,6 +9,9 @@ using Microsoft.Extensions.Logging;
 using NosSmooth.ChatCommands;
 using NosSmooth.Core.Client;
 using NosSmooth.Core.Extensions;
+using NosSmooth.Data.NOSFiles;
+using NosSmooth.Data.NOSFiles.Extensions;
+using NosSmooth.Extensions.Pathfinding.Extensions;
 using NosSmooth.LocalBinding;
 using NosSmooth.LocalClient;
 using NosSmooth.LocalClient.Extensions;
@@ -28,6 +31,8 @@ public class Startup
     {
         var collection = new ServiceCollection()
             .AddLocalClient()
+            .AddNostaleDataFiles()
+            .AddNostalePathfinding()
             .AddScoped<Commands.WalkCommands>()
             .AddScoped<DetachCommand>()
             .AddSingleton<CancellationTokenSource>()
@@ -72,6 +77,14 @@ public class Startup
         {
             logger.LogError("Could not initialize default packet serializers correctly");
             logger.LogResultError(packetAddResult);
+        }
+
+        var dataManager = provider.GetRequiredService<NostaleDataFilesManager>();
+        var dataResult = dataManager.Initialize();
+        if (!dataResult.IsSuccess)
+        {
+            logger.LogError("Could not initialize the nostale data files");
+            logger.LogResultError(dataResult);
         }
 
         var mainCancellation = provider.GetRequiredService<CancellationTokenSource>();

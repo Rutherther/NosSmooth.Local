@@ -13,10 +13,12 @@ namespace WalkCommands;
 /// </summary>
 public class DllMain
 {
+    /// <summary>
+    /// Allocate console.
+    /// </summary>
+    /// <returns>Whether the operation was successful.</returns>
     [DllImport("kernel32")]
-#pragma warning disable SA1600
     public static extern bool AllocConsole();
-#pragma warning restore SA1600
 
     /// <summary>
     /// Represents the dll entrypoint method.
