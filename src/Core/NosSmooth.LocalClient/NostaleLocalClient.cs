@@ -175,41 +175,49 @@ public class NostaleLocalClient : BaseNostaleClient
 
     private async Task ProcessPacketAsync(PacketSource type, string packetString)
     {
-        var packetResult = _packetSerializer.Deserialize(packetString, type);
-        IPacket packet;
-        if (!packetResult.IsSuccess)
+        try
         {
-            if (packetResult.Error is not PacketConverterNotFoundError)
+            var packetResult = _packetSerializer.Deserialize(packetString, type);
+            IPacket packet;
+            if (!packetResult.IsSuccess)
             {
-                _logger.LogWarning("Could not parse {Packet}. Reason:", packetString);
-                _logger.LogResultError(packetResult);
-                packet = new ParsingFailedPacket(packetResult, packetString);
+                if (packetResult.Error is not PacketConverterNotFoundError)
+                {
+                    _logger.LogWarning("Could not parse {Packet}. Reason:", packetString);
+                    _logger.LogResultError(packetResult);
+                    packet = new ParsingFailedPacket(packetResult, packetString);
+                }
+                else
+                {
+                    packet = new UnresolvedPacket(packetString.Split(' ')[0], packetString);
+                }
             }
             else
             {
-                packet = new UnresolvedPacket(packetString.Split(' ')[0], packetString);
+                packet = packetResult.Entity;
+            }
+
+            Result result;
+            if (type == PacketSource.Server)
+            {
+                result = await _packetHandler.HandleReceivedPacketAsync
+                    (this, packet, packetString, _stopRequested ?? default);
+            }
+            else
+            {
+                result = await _packetHandler.HandleSentPacketAsync
+                    (this, packet, packetString, _stopRequested ?? default);
+            }
+
+            if (!result.IsSuccess)
+            {
+                _logger.LogError("There was an error whilst handling packet");
+                _logger.LogResultError(result);
             }
         }
-        else
+        catch (Exception e)
         {
-            packet = packetResult.Entity;
-        }
-
-        Result result;
-        if (type == PacketSource.Server)
-        {
-            result = await _packetHandler.HandleReceivedPacketAsync
-                (this, packet, packetString, _stopRequested ?? default);
-        }
-        else
-        {
-            result = await _packetHandler.HandleSentPacketAsync(this, packet, packetString, _stopRequested ?? default);
-        }
-
-        if (!result.IsSuccess)
-        {
-            _logger.LogError("There was an error whilst handling packet");
-            _logger.LogResultError(result);
+            _logger.LogError(e, "The process packet threw an exception");
         }
     }
 
