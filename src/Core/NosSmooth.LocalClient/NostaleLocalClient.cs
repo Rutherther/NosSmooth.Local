@@ -112,17 +112,19 @@ public class NostaleLocalClient : BaseNostaleClient
     }
 
     /// <inheritdoc />
-    public override Task<Result> ReceivePacketAsync(string packetString, CancellationToken ct = default)
+    public override async Task<Result> ReceivePacketAsync(string packetString, CancellationToken ct = default)
     {
         ReceivePacket(packetString);
-        return Task.FromResult(Result.FromSuccess());
+        await ProcessPacketAsync(PacketSource.Server, packetString);
+        return Result.FromSuccess();
     }
 
     /// <inheritdoc />
-    public override Task<Result> SendPacketAsync(string packetString, CancellationToken ct = default)
+    public override async Task<Result> SendPacketAsync(string packetString, CancellationToken ct = default)
     {
         SendPacket(packetString);
-        return Task.FromResult(Result.FromSuccess());
+        await ProcessPacketAsync(PacketSource.Client, packetString);
+        return Result.FromSuccess();
     }
 
     private bool ReceiveCallback(string packet)
