@@ -20,7 +20,7 @@ namespace NosSmooth.LocalClient.CommandHandlers.Walk;
 internal class ControlCommandWalkHandler
 {
     private readonly INostaleClient _nostaleClient;
-    private readonly Func<short, short, Result<bool>> _walkFunction;
+    private readonly Func<short, short, CancellationToken, Task<Result<bool>>> _walkFunction;
     private readonly ControlManager _controlManager;
     private readonly WalkCommandHandlerOptions _options;
 
@@ -38,7 +38,7 @@ internal class ControlCommandWalkHandler
     public ControlCommandWalkHandler
     (
         INostaleClient nostaleClient,
-        Func<short, short, Result<bool>> walkFunction,
+        Func<short, short, CancellationToken, Task<Result<bool>>> walkFunction,
         ControlManager controlManager,
         WalkCommandHandlerOptions options
     )
@@ -131,7 +131,7 @@ internal class ControlCommandWalkHandler
 
     private async Task<Result> WalkGrantedCallback(CancellationToken ct)
     {
-        var result = _walkFunction(_x, _y);
+        var result = await _walkFunction(_x, _y, ct);
         if (!result.IsSuccess)
         {
             return Result.FromError(result);

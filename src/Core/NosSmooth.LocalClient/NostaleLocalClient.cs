@@ -14,6 +14,7 @@ using NosSmooth.Core.Extensions;
 using NosSmooth.Core.Packets;
 using NosSmooth.LocalBinding.Objects;
 using NosSmooth.LocalBinding.Structs;
+using NosSmooth.LocalClient.CommandHandlers.Walk;
 using NosSmooth.Packets;
 using NosSmooth.Packets.Errors;
 using NosSmooth.PacketSerializer.Abstractions.Attributes;
@@ -36,6 +37,7 @@ public class NostaleLocalClient : BaseNostaleClient
     private readonly ControlCommands _controlCommands;
     private readonly IPacketSerializer _packetSerializer;
     private readonly IPacketHandler _packetHandler;
+    private readonly UserActionDetector _userActionDetector;
     private readonly ILogger _logger;
     private readonly IServiceProvider _provider;
     private readonly LocalClientOptions _options;
@@ -52,6 +54,7 @@ public class NostaleLocalClient : BaseNostaleClient
     /// <param name="commandProcessor">The command processor.</param>
     /// <param name="packetSerializer">The packet serializer.</param>
     /// <param name="packetHandler">The packet handler.</param>
+    /// <param name="userActionDetector">The user action detector.</param>
     /// <param name="logger">The logger.</param>
     /// <param name="options">The options for the client.</param>
     /// <param name="provider">The dependency injection provider.</param>
@@ -64,6 +67,7 @@ public class NostaleLocalClient : BaseNostaleClient
         CommandProcessor commandProcessor,
         IPacketSerializer packetSerializer,
         IPacketHandler packetHandler,
+        UserActionDetector userActionDetector,
         ILogger<NostaleLocalClient> logger,
         IOptions<LocalClientOptions> options,
         IServiceProvider provider
@@ -77,6 +81,7 @@ public class NostaleLocalClient : BaseNostaleClient
         _controlCommands = controlCommands;
         _packetSerializer = packetSerializer;
         _packetHandler = packetHandler;
+        _userActionDetector = userActionDetector;
         _logger = logger;
         _provider = provider;
     }
@@ -235,11 +240,37 @@ public class NostaleLocalClient : BaseNostaleClient
 
     private bool PetWalk(PetManager petManager, ushort x, ushort y)
     {
+        if (!_userActionDetector.IsPetWalkUserOperation(petManager, x, y))
+        { // do not cancel operations made by NosTale or bot
+            return true;
+        }
+
+        if (_controlCommands.AllowUserActions)
+        {
+            Task.Run
+            (
+                async () => await _controlCommands.CancelAsync
+                    (ControlCommandsFilter.UserCancellable, false, (CancellationToken)_stopRequested!)
+            );
+        }
         return _controlCommands.AllowUserActions;
     }
 
     private bool Walk(ushort x, ushort y)
     {
+        if (!_userActionDetector.IsWalkUserAction(x, y))
+        { // do not cancel operations made by NosTale or bot
+            return true;
+        }
+
+        if (_controlCommands.AllowUserActions)
+        {
+            Task.Run
+            (
+                async () => await _controlCommands.CancelAsync
+                    (ControlCommandsFilter.UserCancellable, false, (CancellationToken)_stopRequested!)
+            );
+        }
         return _controlCommands.AllowUserActions;
     }
 }

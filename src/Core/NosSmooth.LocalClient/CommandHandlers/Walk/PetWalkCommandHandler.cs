@@ -25,6 +25,7 @@ public class PetWalkCommandHandler : ICommandHandler<PetWalkCommand>
     public const string PetWalkControlGroup = "PetWalk";
 
     private readonly PetManagerBinding _petManagerBinding;
+    private readonly UserActionDetector _userActionDetector;
     private readonly INostaleClient _nostaleClient;
     private readonly WalkCommandHandlerOptions _options;
 
@@ -32,17 +33,20 @@ public class PetWalkCommandHandler : ICommandHandler<PetWalkCommand>
     /// Initializes a new instance of the <see cref="PetWalkCommandHandler"/> class.
     /// </summary>
     /// <param name="petManagerBinding">The character object binding.</param>
+    /// <param name="userActionDetector">The user action detector.</param>
     /// <param name="nostaleClient">The nostale client.</param>
     /// <param name="options">The options.</param>
     public PetWalkCommandHandler
     (
         PetManagerBinding petManagerBinding,
+        UserActionDetector userActionDetector,
         INostaleClient nostaleClient,
         IOptions<WalkCommandHandlerOptions> options
     )
     {
         _options = options.Value;
         _petManagerBinding = petManagerBinding;
+        _userActionDetector = userActionDetector;
         _nostaleClient = nostaleClient;
     }
 
@@ -58,7 +62,8 @@ public class PetWalkCommandHandler : ICommandHandler<PetWalkCommand>
         var handler = new ControlCommandWalkHandler
         (
             _nostaleClient,
-            (x, y) => _petManagerBinding.PetWalk(command.PetSelector, x, y),
+            async (x, y, ct) => await _userActionDetector.NotUserActionAsync
+                (() => _petManagerBinding.PetWalk(command.PetSelector, x, y), ct),
             petManager,
             _options
         );

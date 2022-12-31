@@ -26,6 +26,7 @@ public class PlayerWalkCommandHandler : ICommandHandler<PlayerWalkCommand>
     public const string PlayerWalkControlGroup = "PlayerWalk";
 
     private readonly PlayerManagerBinding _playerManagerBinding;
+    private readonly UserActionDetector _userActionDetector;
     private readonly INostaleClient _nostaleClient;
     private readonly WalkCommandHandlerOptions _options;
 
@@ -33,17 +34,20 @@ public class PlayerWalkCommandHandler : ICommandHandler<PlayerWalkCommand>
     /// Initializes a new instance of the <see cref="PlayerWalkCommandHandler"/> class.
     /// </summary>
     /// <param name="playerManagerBinding">The character object binding.</param>
+    /// <param name="userActionDetector">The user action detector.</param>
     /// <param name="nostaleClient">The nostale client.</param>
     /// <param name="options">The options.</param>
     public PlayerWalkCommandHandler
     (
         PlayerManagerBinding playerManagerBinding,
+        UserActionDetector userActionDetector,
         INostaleClient nostaleClient,
         IOptions<WalkCommandHandlerOptions> options
     )
     {
         _options = options.Value;
         _playerManagerBinding = playerManagerBinding;
+        _userActionDetector = userActionDetector;
         _nostaleClient = nostaleClient;
     }
 
@@ -53,7 +57,8 @@ public class PlayerWalkCommandHandler : ICommandHandler<PlayerWalkCommand>
         var handler = new ControlCommandWalkHandler
         (
             _nostaleClient,
-            (x, y) => _playerManagerBinding.Walk(x, y),
+            async (x, y, ct) =>
+                await _userActionDetector.NotUserWalkAsync(_playerManagerBinding, x, y, ct),
             _playerManagerBinding.PlayerManager,
             _options
         );

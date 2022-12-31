@@ -29,6 +29,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddNostaleCore();
         serviceCollection.AddNostaleBindings();
         serviceCollection
+            .AddSingleton<UserActionDetector>()
             .AddTakeControlCommand()
             .AddCommandHandler<AttackCommandHandler>()
             .AddCommandHandler<PlayerWalkCommandHandler>()
