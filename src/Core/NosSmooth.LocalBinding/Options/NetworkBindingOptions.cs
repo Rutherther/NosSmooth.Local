@@ -40,5 +40,5 @@ public class NetworkBindingOptions
     /// <summary>
     /// Gets or sets the pattern to find the receive function at.
     /// </summary>
-    public string ReceiveFunctionPattern { get; set; } = "55 8B EC 83 C4 F4 53 56 57 33 C9 89 4D F4 89 55 FC 8B D8 8B 45 FC";
+    public string ReceiveFunctionPattern { get; set; } = "55 8B EC 83 C4 ?? 53 56 57 33 C9 89 4D ?? 89 4D ?? 89 55 ?? 8B D8 8B 45 ??";
 }
