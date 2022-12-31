@@ -120,7 +120,7 @@ public class WalkCommands : CommandGroup
             return receiveResult;
         }
 
-        var walkResult = await _walkManager.GoToAsync(x, y, CancellationToken, petSelectors);
+        var walkResult = await _walkManager.GoToAsync(x, y, isCancellable, CancellationToken, petSelectors);
         if (!walkResult.IsSuccess)
         {
             await _feedbackService.SendErrorMessageAsync
