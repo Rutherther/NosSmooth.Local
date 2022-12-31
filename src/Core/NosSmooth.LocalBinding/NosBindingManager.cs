@@ -353,7 +353,7 @@ public class NosBindingManager : IDisposable
         var walkFunctionAddress = Scanner.FindPattern(pattern);
         if (!walkFunctionAddress.Found)
         {
-            return new BindingNotFoundError(pattern, "PetManagerBinding.PetWalk");
+            return new BindingNotFoundError(pattern, name);
         }
 
         try

@@ -28,7 +28,6 @@ public class UnitManagerBinding
     (
         new[] { FunctionAttribute.Register.eax, FunctionAttribute.Register.edx },
         FunctionAttribute.Register.eax,
-        FunctionAttribute.StackCleanup.Callee
         FunctionAttribute.StackCleanup.Callee,
         new[] { FunctionAttribute.Register.ebx, FunctionAttribute.Register.esi, FunctionAttribute.Register.edi, FunctionAttribute.Register.ebp }
     )]
