@@ -217,6 +217,8 @@ public class NetworkBinding
         }
     }
 
+    private bool _receivedCancel = false;
+
     private void ReceivePacketDetour(IntPtr packetObject, IntPtr packetString)
     {
         var packet = Marshal.PtrToStringAnsi(packetString);
@@ -229,7 +231,19 @@ public class NetworkBinding
             var result = PacketReceive?.Invoke(packet);
             if (result ?? true)
             {
-                _originalReceive(packetObject, packetString);
+                // This is a TEMPORARY fix, I don't know why,
+                // but upon logging in (for OpenNos servers)
+                // there is an exception when receiving packet
+                // cancel.
+                // TODO FIX THIS correctly
+                if (_receivedCancel || !packet.StartsWith("cancel"))
+                {
+                    _originalReceive(packetObject, packetString);
+                }
+                else
+                {
+                    _receivedCancel = true;
+                }
             }
         }
     }
