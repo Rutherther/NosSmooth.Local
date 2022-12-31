@@ -23,7 +23,8 @@ public class NetworkBinding
     (
         new[] { FunctionAttribute.Register.eax, FunctionAttribute.Register.edx },
         FunctionAttribute.Register.eax,
-        FunctionAttribute.StackCleanup.Callee
+        FunctionAttribute.StackCleanup.Callee,
+        new[] { FunctionAttribute.Register.ebx, FunctionAttribute.Register.esi, FunctionAttribute.Register.edi, FunctionAttribute.Register.ebp }
     )]
     private delegate void PacketSendDelegate(nuint packetObject, nuint packetString);
 
@@ -31,7 +32,8 @@ public class NetworkBinding
     (
         new[] { FunctionAttribute.Register.eax, FunctionAttribute.Register.edx },
         FunctionAttribute.Register.eax,
-        FunctionAttribute.StackCleanup.Callee
+        FunctionAttribute.StackCleanup.Callee,
+        new[] { FunctionAttribute.Register.ebx, FunctionAttribute.Register.esi, FunctionAttribute.Register.edi, FunctionAttribute.Register.ebp }
     )]
     private delegate void PacketReceiveDelegate(nuint packetObject, nuint packetString);
 

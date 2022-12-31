@@ -23,7 +23,8 @@ public class PlayerManagerBinding
     (
         new[] { FunctionAttribute.Register.eax, FunctionAttribute.Register.edx, FunctionAttribute.Register.ecx },
         FunctionAttribute.Register.eax,
-        FunctionAttribute.StackCleanup.Callee
+        FunctionAttribute.StackCleanup.Callee,
+        new[] { FunctionAttribute.Register.ebx, FunctionAttribute.Register.esi, FunctionAttribute.Register.edi, FunctionAttribute.Register.ebp }
     )]
     private delegate bool WalkDelegate(nuint playerManagerPtr, int position, short unknown0 = 0, int unknown1 = 1);
 
@@ -31,7 +32,8 @@ public class PlayerManagerBinding
     (
         new[] { FunctionAttribute.Register.eax, FunctionAttribute.Register.edx, FunctionAttribute.Register.ecx },
         FunctionAttribute.Register.eax,
-        FunctionAttribute.StackCleanup.Callee
+        FunctionAttribute.StackCleanup.Callee,
+        new[] { FunctionAttribute.Register.ebx, FunctionAttribute.Register.esi, FunctionAttribute.Register.edi, FunctionAttribute.Register.ebp }
     )]
     private delegate bool FollowEntityDelegate
     (
@@ -45,7 +47,8 @@ public class PlayerManagerBinding
     (
         new[] { FunctionAttribute.Register.eax, FunctionAttribute.Register.edx },
         FunctionAttribute.Register.eax,
-        FunctionAttribute.StackCleanup.Callee
+        FunctionAttribute.StackCleanup.Callee,
+        new[] { FunctionAttribute.Register.ebx, FunctionAttribute.Register.esi, FunctionAttribute.Register.edi, FunctionAttribute.Register.ebp }
     )]
     private delegate void UnfollowEntityDelegate(nuint playerManagerPtr, int unknown = 0);
 

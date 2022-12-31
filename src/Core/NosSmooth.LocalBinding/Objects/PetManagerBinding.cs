@@ -52,7 +52,8 @@ public class PetManagerBinding
     (
         new[] { FunctionAttribute.Register.eax, FunctionAttribute.Register.edx, FunctionAttribute.Register.ecx },
         FunctionAttribute.Register.eax,
-        FunctionAttribute.StackCleanup.Callee
+        FunctionAttribute.StackCleanup.Callee,
+        new[] { FunctionAttribute.Register.ebx, FunctionAttribute.Register.esi, FunctionAttribute.Register.edi, FunctionAttribute.Register.ebp }
     )]
     private delegate bool PetWalkDelegate
     (

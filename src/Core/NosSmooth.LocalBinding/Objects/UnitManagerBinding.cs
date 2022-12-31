@@ -9,10 +9,9 @@ using NosSmooth.LocalBinding.Errors;
 using NosSmooth.LocalBinding.Extensions;
 using NosSmooth.LocalBinding.Options;
 using NosSmooth.LocalBinding.Structs;
-using Reloaded.Hooks;
 using Reloaded.Hooks.Definitions;
+using Reloaded.Hooks.Definitions.Enums;
 using Reloaded.Hooks.Definitions.X86;
-using Reloaded.Memory.Buffers.Internal.Kernel32;
 using Remora.Results;
 
 namespace NosSmooth.LocalBinding.Objects;
@@ -30,6 +29,8 @@ public class UnitManagerBinding
         new[] { FunctionAttribute.Register.eax, FunctionAttribute.Register.edx },
         FunctionAttribute.Register.eax,
         FunctionAttribute.StackCleanup.Callee
+        FunctionAttribute.StackCleanup.Callee,
+        new[] { FunctionAttribute.Register.ebx, FunctionAttribute.Register.esi, FunctionAttribute.Register.edi, FunctionAttribute.Register.ebp }
     )]
     private delegate int FocusEntityDelegate(nuint unitManagerPtr, nuint entityPtr);
 
