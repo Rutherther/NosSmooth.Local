@@ -15,7 +15,7 @@ namespace NosSmooth.LocalBinding.Objects;
 public class NostaleStringA : IDisposable
 {
     private readonly IMemory _memory;
-    private IntPtr _pointer;
+    private nuint _pointer;
 
     /// <summary>
     /// Create an instance of <see cref="NostaleStringA"/>.
@@ -30,16 +30,14 @@ public class NostaleStringA : IDisposable
         memory.SafeWrite(allocated, 1);
         memory.SafeWrite(allocated + 4, data.Length);
         memory.SafeWriteRaw(allocated + 8, bytes);
-        memory.SafeWrite(allocated + 8 + data.Length, 0);
-
+        memory.SafeWrite(allocated + 8 + (nuint)data.Length, 0);
         return new NostaleStringA(memory, allocated);
     }
 
-    private NostaleStringA(IMemory memory, IntPtr pointer)
+    private NostaleStringA(IMemory memory, nuint pointer)
     {
         _memory = memory;
         _pointer = pointer;
-
     }
 
     /// <summary>
@@ -53,13 +51,13 @@ public class NostaleStringA : IDisposable
     /// <summary>
     /// Gets whether the string is still allocated.
     /// </summary>
-    public bool Allocated => _pointer != IntPtr.Zero;
+    public bool Allocated => _pointer != nuint.Zero;
 
     /// <summary>
     /// Get the pointer to the string.
     /// </summary>
     /// <returns>A pointer to the string to pass to NosTale.</returns>
-    public IntPtr Get()
+    public nuint Get()
     {
         return _pointer + 0x08;
     }
@@ -72,7 +70,7 @@ public class NostaleStringA : IDisposable
         if (Allocated)
         {
             _memory.Free(_pointer);
-            _pointer = IntPtr.Zero;
+            _pointer = nuint.Zero;
         }
     }
 

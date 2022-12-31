@@ -56,7 +56,7 @@ public class PetManagerBinding
     )]
     private delegate bool PetWalkDelegate
     (
-        IntPtr petManagerPtr,
+        nuint petManagerPtr,
         uint position,
         short unknown0 = 0,
         int unknown1 = 1,
@@ -122,7 +122,7 @@ public class PetManagerBinding
 
     private bool PetWalkDetour
     (
-        IntPtr petManagerPtr,
+        nuint petManagerPtr,
         uint position,
         short unknown0 = 0,
         int unknown1 = 1,

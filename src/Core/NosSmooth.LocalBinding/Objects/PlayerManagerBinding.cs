@@ -25,7 +25,7 @@ public class PlayerManagerBinding
         FunctionAttribute.Register.eax,
         FunctionAttribute.StackCleanup.Callee
     )]
-    private delegate bool WalkDelegate(IntPtr playerManagerPtr, int position, short unknown0 = 0, int unknown1 = 1);
+    private delegate bool WalkDelegate(nuint playerManagerPtr, int position, short unknown0 = 0, int unknown1 = 1);
 
     [Function
     (
@@ -35,8 +35,8 @@ public class PlayerManagerBinding
     )]
     private delegate bool FollowEntityDelegate
     (
-        IntPtr playerManagerPtr,
-        IntPtr entityPtr,
+        nuint playerManagerPtr,
+        nuint entityPtr,
         int unknown1 = 0,
         int unknown2 = 1
     );
@@ -47,7 +47,7 @@ public class PlayerManagerBinding
         FunctionAttribute.Register.eax,
         FunctionAttribute.StackCleanup.Callee
     )]
-    private delegate void UnfollowEntityDelegate(IntPtr playerManagerPtr, int unknown = 0);
+    private delegate void UnfollowEntityDelegate(nuint playerManagerPtr, int unknown = 0);
 
     /// <summary>
     /// Create the network binding with finding the network object and functions.
@@ -60,19 +60,19 @@ public class PlayerManagerBinding
     {
         var process = Process.GetCurrentProcess();
 
-        var walkFunctionAddress = bindingManager.Scanner.CompiledFindPattern(options.WalkFunctionPattern);
+        var walkFunctionAddress = bindingManager.Scanner.FindPattern(options.WalkFunctionPattern);
         if (!walkFunctionAddress.Found)
         {
             return new BindingNotFoundError(options.WalkFunctionPattern, "CharacterBinding.Walk");
         }
 
-        var followEntityAddress = bindingManager.Scanner.CompiledFindPattern(options.FollowEntityPattern);
+        var followEntityAddress = bindingManager.Scanner.FindPattern(options.FollowEntityPattern);
         if (!followEntityAddress.Found)
         {
             return new BindingNotFoundError(options.FollowEntityPattern, "CharacterBinding.FollowEntity");
         }
 
-        var unfollowEntityAddress = bindingManager.Scanner.CompiledFindPattern(options.UnfollowEntityPattern);
+        var unfollowEntityAddress = bindingManager.Scanner.FindPattern(options.UnfollowEntityPattern);
         if (!unfollowEntityAddress.Found)
         {
             return new BindingNotFoundError(options.UnfollowEntityPattern, "CharacterBinding.UnfollowEntity");
@@ -200,7 +200,7 @@ public class PlayerManagerBinding
         }
     }
 
-    private bool WalkDetour(IntPtr characterObject, int position, short unknown0, int unknown1)
+    private bool WalkDetour(nuint characterObject, int position, short unknown0, int unknown1)
     {
         var result = WalkCall?.Invoke((ushort)(position & 0xFFFF), (ushort)((position >> 16) & 0xFFFF));
         if (result ?? true)
@@ -217,14 +217,14 @@ public class PlayerManagerBinding
     /// <param name="entity">The entity.</param>
     /// <returns>A result that may or may not have succeeded.</returns>
     public Result FollowEntity(MapBaseObj? entity)
-        => FollowEntity(entity?.Address ?? IntPtr.Zero);
+        => FollowEntity(entity?.Address ?? nuint.Zero);
 
     /// <summary>
     /// Follow the entity.
     /// </summary>
     /// <param name="entityAddress">The entity address.</param>
     /// <returns>A result that may or may not have succeeded.</returns>
-    public Result FollowEntity(IntPtr entityAddress)
+    public Result FollowEntity(nuint entityAddress)
     {
         try
         {
@@ -258,8 +258,8 @@ public class PlayerManagerBinding
 
     private bool FollowEntityDetour
     (
-        IntPtr playerManagerPtr,
-        IntPtr entityPtr,
+        nuint playerManagerPtr,
+        nuint entityPtr,
         int unknown1,
         int unknown2
     )
@@ -273,7 +273,7 @@ public class PlayerManagerBinding
         return false;
     }
 
-    private void UnfollowEntityDetour(IntPtr playerManagerPtr, int unknown)
+    private void UnfollowEntityDetour(nuint playerManagerPtr, int unknown)
     {
         var result = FollowEntityCall?.Invoke(null);
         if (result ?? true)

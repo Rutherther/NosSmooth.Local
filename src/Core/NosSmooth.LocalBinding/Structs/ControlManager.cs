@@ -18,7 +18,7 @@ public abstract class ControlManager : NostaleObject
     /// </summary>
     /// <param name="memory">The memory.</param>
     /// <param name="address">The address of the manager.</param>
-    protected ControlManager(IMemory memory, IntPtr address)
+    protected ControlManager(IMemory memory, nuint address)
         : base(memory, address)
     {
     }

@@ -12,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="NosSmooth.Core" Version="1.2.1" />
+      <PackageReference Include="NosSmooth.Core" Version="3.0.0" />
     </ItemGroup>
 
 </Project>

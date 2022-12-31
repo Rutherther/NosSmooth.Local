@@ -25,7 +25,7 @@ public class SceneManager
     /// <returns>The player manager or an error.</returns>
     public static Result<SceneManager> Create(NosBrowserManager nosBrowserManager, SceneManagerOptions options)
     {
-        var characterObjectAddress = nosBrowserManager.Scanner.CompiledFindPattern(options.SceneManagerObjectPattern);
+        var characterObjectAddress = nosBrowserManager.Scanner.FindPattern(options.SceneManagerObjectPattern);
         if (!characterObjectAddress.Found)
         {
             return new BindingNotFoundError(options.SceneManagerObjectPattern, "SceneManager");
@@ -60,7 +60,7 @@ public class SceneManager
     /// <summary>
     /// Gets the address of the scene manager.
     /// </summary>
-    public IntPtr Address => _memory.FollowStaticAddressOffsets(_staticSceneManagerAddress, _sceneManagerOffsets);
+    public nuint Address => _memory.FollowStaticAddressOffsets(_staticSceneManagerAddress, _sceneManagerOffsets);
 
     /// <summary>
     /// Gets the player list.
@@ -90,7 +90,7 @@ public class SceneManager
         get
         {
             var ptr = ReadPtr(Address + 0x48);
-            if (ptr == IntPtr.Zero)
+            if (ptr == nuint.Zero)
             {
                 return null;
             }
@@ -102,7 +102,7 @@ public class SceneManager
     /// <summary>
     /// Gets the lock on target marked address.
     /// </summary>
-    public IntPtr LockOnTargetMarkedAddress
+    public nuint LockOnTargetMarkedAddress
     {
         get
         {
@@ -113,10 +113,10 @@ public class SceneManager
         }
     }
 
-    private IntPtr ReadPtr(IntPtr ptr)
+    private nuint ReadPtr(nuint ptr)
     {
         _memory.Read(ptr, out int read);
-        return (IntPtr)read;
+        return (nuint)read;
     }
 
     /// <summary>

@@ -21,7 +21,7 @@ internal class ManagedMemoryAllocation : IDisposable
     /// </summary>
     /// <param name="memory">The memory with allocation.</param>
     /// <param name="pointer">The pointer to allocated memory.</param>
-    public ManagedMemoryAllocation(IMemory memory, IntPtr pointer)
+    public ManagedMemoryAllocation(IMemory memory, nuint pointer)
     {
         Pointer = pointer;
         _memory = memory;
@@ -31,17 +31,17 @@ internal class ManagedMemoryAllocation : IDisposable
     /// <summary>
     /// The allocated pointer number.
     /// </summary>
-    public IntPtr Pointer { get; private set; }
+    public nuint Pointer { get; private set; }
 
     /// <summary>
     /// Whether the memory is currently allocated.
     /// </summary>
-    public bool Allocated => Pointer != IntPtr.Zero;
+    public bool Allocated => Pointer != nuint.Zero;
 
     /// <inheritdoc />
     public void Dispose()
     {
         _memory.Free(Pointer);
-        Pointer = IntPtr.Zero;
+        Pointer = nuint.Zero;
     }
 }

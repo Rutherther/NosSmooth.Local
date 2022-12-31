@@ -164,12 +164,12 @@ public class NosInjector
     {
         var bytes = Encoding.Unicode.GetBytes(str);
         var allocated = memory.Allocate(bytes.Length + 1);
-        if (allocated == IntPtr.Zero)
+        if (allocated == nuint.Zero)
         {
             return new ManagedMemoryAllocation(memory, allocated);
         }
 
-        memory.SafeWriteRaw(allocated + bytes.Length, new byte[] { 0 });
+        memory.SafeWriteRaw(allocated + (nuint)bytes.Length, new byte[] { 0 });
         memory.SafeWriteRaw(allocated, bytes);
         return new ManagedMemoryAllocation(memory, allocated);
     }

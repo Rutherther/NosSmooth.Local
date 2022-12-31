@@ -25,7 +25,7 @@ public class NetworkBinding
         FunctionAttribute.Register.eax,
         FunctionAttribute.StackCleanup.Callee
     )]
-    private delegate void PacketSendDelegate(IntPtr packetObject, IntPtr packetString);
+    private delegate void PacketSendDelegate(nuint packetObject, nuint packetString);
 
     [Function
     (
@@ -33,7 +33,7 @@ public class NetworkBinding
         FunctionAttribute.Register.eax,
         FunctionAttribute.StackCleanup.Callee
     )]
-    private delegate void PacketReceiveDelegate(IntPtr packetObject, IntPtr packetString);
+    private delegate void PacketReceiveDelegate(nuint packetObject, nuint packetString);
 
     /// <summary>
     /// Create the network binding with finding the network object and functions.
@@ -44,19 +44,19 @@ public class NetworkBinding
     public static Result<NetworkBinding> Create(NosBindingManager bindingManager, NetworkBindingOptions options)
     {
         var process = Process.GetCurrentProcess();
-        var networkObjectAddress = bindingManager.Scanner.CompiledFindPattern(options.NetworkObjectPattern);
+        var networkObjectAddress = bindingManager.Scanner.FindPattern(options.NetworkObjectPattern);
         if (!networkObjectAddress.Found)
         {
             return new BindingNotFoundError(options.NetworkObjectPattern, "NetworkBinding");
         }
 
-        var packetSendAddress = bindingManager.Scanner.CompiledFindPattern(options.SendFunctionPattern);
+        var packetSendAddress = bindingManager.Scanner.FindPattern(options.SendFunctionPattern);
         if (!packetSendAddress.Found)
         {
             return new BindingNotFoundError(options.SendFunctionPattern, "NetworkBinding.SendPacket");
         }
 
-        var packetReceiveAddress = bindingManager.Scanner.CompiledFindPattern(options.ReceiveFunctionPattern);
+        var packetReceiveAddress = bindingManager.Scanner.FindPattern(options.ReceiveFunctionPattern);
         if (!packetReceiveAddress.Found)
         {
             return new BindingNotFoundError(options.ReceiveFunctionPattern, "NetworkBinding.ReceivePacket");
@@ -73,7 +73,7 @@ public class NetworkBinding
         var binding = new NetworkBinding
         (
             bindingManager,
-            (IntPtr)(networkObjectAddress.Offset + (int)process.MainModule!.BaseAddress + 0x01),
+            (nuint)(networkObjectAddress.Offset + (int)process.MainModule!.BaseAddress + 0x01),
             sendWrapper,
             receiveWrapper
         );
@@ -98,7 +98,7 @@ public class NetworkBinding
     }
 
     private readonly NosBindingManager _bindingManager;
-    private readonly IntPtr _networkManagerAddress;
+    private readonly nuint _networkManagerAddress;
     private IHook<PacketSendDelegate>? _sendHook;
     private IHook<PacketReceiveDelegate>? _receiveHook;
     private PacketSendDelegate _originalSend;
@@ -107,7 +107,7 @@ public class NetworkBinding
     private NetworkBinding
     (
         NosBindingManager bindingManager,
-        IntPtr networkManagerAddress,
+        nuint networkManagerAddress,
         PacketSendDelegate originalSend,
         PacketReceiveDelegate originalReceive
     )
@@ -185,9 +185,9 @@ public class NetworkBinding
         return Result.FromSuccess();
     }
 
-    private IntPtr GetManagerAddress(bool third)
+    private nuint GetManagerAddress(bool third)
     {
-        IntPtr networkManager = _networkManagerAddress;
+        nuint networkManager = _networkManagerAddress;
         _bindingManager.Memory.Read(networkManager, out networkManager);
         _bindingManager.Memory.Read(networkManager, out networkManager);
         _bindingManager.Memory.Read(networkManager, out networkManager);
@@ -200,9 +200,9 @@ public class NetworkBinding
         return networkManager;
     }
 
-    private void SendPacketDetour(IntPtr packetObject, IntPtr packetString)
+    private void SendPacketDetour(nuint packetObject, nuint packetString)
     {
-        var packet = Marshal.PtrToStringAnsi(packetString);
+        var packet = Marshal.PtrToStringAnsi((IntPtr)packetString);
         if (packet is null)
         { // ?
             _originalSend(packetObject, packetString);
@@ -219,9 +219,9 @@ public class NetworkBinding
 
     private bool _receivedCancel = false;
 
-    private void ReceivePacketDetour(IntPtr packetObject, IntPtr packetString)
+    private void ReceivePacketDetour(nuint packetObject, nuint packetString)
     {
-        var packet = Marshal.PtrToStringAnsi(packetString);
+        var packet = Marshal.PtrToStringAnsi((IntPtr)packetString);
         if (packet is null)
         { // ?
             _originalReceive(packetObject, packetString);

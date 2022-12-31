@@ -25,7 +25,7 @@ public abstract class NostaleObject
     /// </summary>
     /// <param name="memory">The memory.</param>
     /// <param name="address">The address in the memory.</param>
-    protected NostaleObject(IMemory memory, IntPtr address)
+    protected NostaleObject(IMemory memory, nuint address)
     {
         Memory = memory;
         Address = address;
@@ -39,5 +39,5 @@ public abstract class NostaleObject
     /// <summary>
     /// Gets the address of the object.
     /// </summary>
-    public virtual IntPtr Address { get; internal set; } = IntPtr.Zero;
+    public virtual nuint Address { get; internal set; } = nuint.Zero;
 }

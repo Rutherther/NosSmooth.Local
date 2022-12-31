@@ -350,7 +350,7 @@ public class NosBindingManager : IDisposable
         bool enableHook = true
     )
     {
-        var walkFunctionAddress = Scanner.CompiledFindPattern(pattern);
+        var walkFunctionAddress = Scanner.FindPattern(pattern);
         if (!walkFunctionAddress.Found)
         {
             return new BindingNotFoundError(pattern, "PetManagerBinding.PetWalk");

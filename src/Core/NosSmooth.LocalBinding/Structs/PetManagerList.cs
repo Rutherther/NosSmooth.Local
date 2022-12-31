@@ -9,7 +9,6 @@ using NosSmooth.LocalBinding.Extensions;
 using NosSmooth.LocalBinding.Options;
 using Reloaded.Memory.Sources;
 using Remora.Results;
-using SharpDisasm.Udis86;
 
 namespace NosSmooth.LocalBinding.Structs;
 
@@ -26,7 +25,7 @@ public class PetManagerList : NostaleList<PetManager>
     /// <returns>The player manager or an error.</returns>
     public static Result<PetManagerList> Create(NosBrowserManager nosBrowserManager, PetManagerOptions options)
     {
-        var characterObjectAddress = nosBrowserManager.Scanner.CompiledFindPattern(options.PetManagerListPattern);
+        var characterObjectAddress = nosBrowserManager.Scanner.FindPattern(options.PetManagerListPattern);
         if (!characterObjectAddress.Found)
         {
             return new BindingNotFoundError(options.PetManagerListPattern, "PetManagerList");

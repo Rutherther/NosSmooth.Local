@@ -14,7 +14,6 @@ using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.X86;
 using Reloaded.Memory.Buffers.Internal.Kernel32;
 using Remora.Results;
-using SharpDisasm.Udis86;
 
 namespace NosSmooth.LocalBinding.Objects;
 
@@ -32,7 +31,7 @@ public class UnitManagerBinding
         FunctionAttribute.Register.eax,
         FunctionAttribute.StackCleanup.Callee
     )]
-    private delegate int FocusEntityDelegate(IntPtr unitManagerPtr, IntPtr entityPtr);
+    private delegate int FocusEntityDelegate(nuint unitManagerPtr, nuint entityPtr);
 
     /// <summary>
     /// Create the scene manager binding.
@@ -45,13 +44,13 @@ public class UnitManagerBinding
     {
         var process = Process.GetCurrentProcess();
 
-        var unitManagerStaticAddress = bindingManager.Scanner.CompiledFindPattern(bindingOptions.UnitManagerPattern);
+        var unitManagerStaticAddress = bindingManager.Scanner.FindPattern(bindingOptions.UnitManagerPattern);
         if (!unitManagerStaticAddress.Found)
         {
             return new BindingNotFoundError(bindingOptions.UnitManagerPattern, "UnitManagerBinding.UnitManager");
         }
 
-        var focusEntityAddress = bindingManager.Scanner.CompiledFindPattern(bindingOptions.FocusEntityPattern);
+        var focusEntityAddress = bindingManager.Scanner.FindPattern(bindingOptions.FocusEntityPattern);
         if (!focusEntityAddress.Found)
         {
             return new BindingNotFoundError(bindingOptions.FocusEntityPattern, "UnitManagerBinding.FocusEntity");
@@ -104,7 +103,7 @@ public class UnitManagerBinding
     /// <summary>
     /// Gets the address of unit manager.
     /// </summary>
-    public IntPtr Address => _bindingManager.Memory.FollowStaticAddressOffsets
+    public nuint Address => _bindingManager.Memory.FollowStaticAddressOffsets
         (_staticUnitManagerAddress, _unitManagerOffsets);
 
     /// <summary>
@@ -121,14 +120,14 @@ public class UnitManagerBinding
     /// <param name="entity">The entity.</param>
     /// <returns>A result that may or may not have succeeded.</returns>
     public Result FocusEntity(MapBaseObj? entity)
-        => FocusEntity(entity?.Address ?? IntPtr.Zero);
+        => FocusEntity(entity?.Address ?? nuint.Zero);
 
     /// <summary>
     /// Focus the entity.
     /// </summary>
     /// <param name="entityAddress">The entity address.</param>
     /// <returns>A result that may or may not have succeeded.</returns>
-    public Result FocusEntity(IntPtr entityAddress)
+    public Result FocusEntity(nuint entityAddress)
     {
         try
         {
@@ -142,10 +141,10 @@ public class UnitManagerBinding
         return Result.FromSuccess();
     }
 
-    private int FocusEntityDetour(IntPtr unitManagerPtr, IntPtr entityId)
+    private int FocusEntityDetour(nuint unitManagerPtr, nuint entityId)
     {
         MapBaseObj? obj = null;
-        if (entityId != IntPtr.Zero)
+        if (entityId != nuint.Zero)
         {
             obj = new MapBaseObj(_bindingManager.Memory, entityId);
         }

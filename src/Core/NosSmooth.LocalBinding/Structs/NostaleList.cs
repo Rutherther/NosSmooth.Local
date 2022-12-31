@@ -24,7 +24,7 @@ public class NostaleList<T> : IEnumerable<T>
     /// </summary>
     /// <param name="memory">The memory.</param>
     /// <param name="objListPointer">The object list pointer.</param>
-    public NostaleList(IMemory memory, IntPtr objListPointer)
+    public NostaleList(IMemory memory, nuint objListPointer)
     {
         _memory = memory;
         Address = objListPointer;
@@ -33,7 +33,7 @@ public class NostaleList<T> : IEnumerable<T>
     /// <summary>
     /// Gets the address.
     /// </summary>
-    protected IntPtr Address { get; }
+    protected nuint Address { get; }
 
     /// <summary>
     /// Gets the element at the given index.
@@ -50,12 +50,12 @@ public class NostaleList<T> : IEnumerable<T>
             }
 
             _memory.SafeRead(Address + 0x04, out int arrayAddress);
-            _memory.SafeRead((IntPtr)arrayAddress + (0x04 * index), out int objectAddress);
+            _memory.SafeRead((nuint)arrayAddress + (nuint)(0x04 * index), out int objectAddress);
 
             return new T
             {
                 Memory = _memory,
-                Address = (IntPtr)objectAddress
+                Address = (nuint)objectAddress
             };
         }
     }

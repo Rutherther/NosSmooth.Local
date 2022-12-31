@@ -18,7 +18,7 @@ public class MapNpcObj : MapBaseObj
     /// </summary>
     /// <param name="memory">The memory.</param>
     /// <param name="mapObjPointer">The pointer to the object.</param>
-    public MapNpcObj(IMemory memory, IntPtr mapObjPointer)
+    public MapNpcObj(IMemory memory, nuint mapObjPointer)
         : base(memory, mapObjPointer)
     {
     }

@@ -22,7 +22,7 @@ public class MapPlayerObj : MapBaseObj
     /// </summary>
     /// <param name="memory">The memory.</param>
     /// <param name="mapObjPointer">The player object pointer.</param>
-    public MapPlayerObj(IMemory memory, IntPtr mapObjPointer)
+    public MapPlayerObj(IMemory memory, nuint mapObjPointer)
         : base(memory, mapObjPointer)
     {
         _memory = memory;
@@ -36,9 +36,9 @@ public class MapPlayerObj : MapBaseObj
         get
         {
             _memory.SafeRead(Address + 0x1EC, out int nameAddress);
-            _memory.SafeRead((IntPtr)nameAddress - 4, out int nameLength);
+            _memory.SafeRead((nuint)nameAddress - 4, out int nameLength);
             byte[] data = new byte[nameLength];
-            _memory.SafeReadRaw((IntPtr)nameAddress, out data, nameLength);
+            _memory.SafeReadRaw((nuint)nameAddress, out data, nameLength);
             return Encoding.ASCII.GetString(data);
         }
     }

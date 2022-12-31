@@ -25,7 +25,7 @@ public class MapBaseObj : NostaleObject
     /// </summary>
     /// <param name="memory">The memory.</param>
     /// <param name="mapObjPointer">The map object pointer.</param>
-    public MapBaseObj(IMemory memory, IntPtr mapObjPointer)
+    public MapBaseObj(IMemory memory, nuint mapObjPointer)
         : base(memory, mapObjPointer)
     {
     }

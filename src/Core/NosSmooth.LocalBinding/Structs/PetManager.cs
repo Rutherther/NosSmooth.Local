@@ -20,7 +20,7 @@ public class PetManager : ControlManager
     /// Initializes a new instance of the <see cref="PetManager"/> class.
     /// </summary>
     public PetManager()
-        : base(null!, IntPtr.Zero)
+        : base(null!, nuint.Zero)
     {
     }
 
@@ -29,7 +29,7 @@ public class PetManager : ControlManager
     /// </summary>
     /// <param name="memory">The memory.</param>
     /// <param name="petManagerAddress">The pet manager address.</param>
-    public PetManager(IMemory memory, IntPtr petManagerAddress)
+    public PetManager(IMemory memory, nuint petManagerAddress)
         : base(memory, petManagerAddress)
     {
     }
@@ -42,7 +42,7 @@ public class PetManager : ControlManager
         get
         {
             Memory.SafeRead(Address + 0x7C, out int playerAddress);
-            return new MapNpcObj(Memory, (IntPtr)playerAddress);
+            return new MapNpcObj(Memory, (nuint)playerAddress);
         }
     }
 

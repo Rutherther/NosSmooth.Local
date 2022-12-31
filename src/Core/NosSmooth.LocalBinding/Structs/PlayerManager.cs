@@ -26,7 +26,7 @@ public class PlayerManager : ControlManager
     /// <returns>The player manager or an error.</returns>
     public static Result<PlayerManager> Create(NosBrowserManager nosBrowserManager, PlayerManagerOptions options)
     {
-        var characterObjectAddress = nosBrowserManager.Scanner.CompiledFindPattern(options.PlayerManagerPattern);
+        var characterObjectAddress = nosBrowserManager.Scanner.FindPattern(options.PlayerManagerPattern);
         if (!characterObjectAddress.Found)
         {
             return new BindingNotFoundError(options.PlayerManagerPattern, "PlayerManager");
@@ -52,7 +52,7 @@ public class PlayerManager : ControlManager
     /// <param name="staticPlayerManagerAddress">The pointer to the beginning of the player manager structure.</param>
     /// <param name="playerManagerOffsets">The offsets to get the player manager address from the static one.</param>
     public PlayerManager(IMemory memory, int staticPlayerManagerAddress, int[] playerManagerOffsets)
-        : base(memory, IntPtr.Zero)
+        : base(memory, nuint.Zero)
     {
         _memory = memory;
         _staticPlayerManagerAddress = staticPlayerManagerAddress;
@@ -62,7 +62,7 @@ public class PlayerManager : ControlManager
     /// <summary>
     /// Gets the address to the player manager.
     /// </summary>
-    public override IntPtr Address => _memory.FollowStaticAddressOffsets
+    public override nuint Address => _memory.FollowStaticAddressOffsets
         (_staticPlayerManagerAddress, _playerManagerOffsets);
 
     /// <summary>
@@ -73,7 +73,7 @@ public class PlayerManager : ControlManager
         get
         {
             _memory.SafeRead(Address + 0x20, out int playerAddress);
-            return new MapPlayerObj(_memory, (IntPtr)playerAddress);
+            return new MapPlayerObj(_memory, (nuint)playerAddress);
         }
     }
 

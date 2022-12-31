@@ -136,7 +136,7 @@ public class NosBrowserManager
         get
         {
             var player = PlayerManager.Player;
-            return player.Address != IntPtr.Zero;
+            return player.Address != nuint.Zero;
         }
     }
 
