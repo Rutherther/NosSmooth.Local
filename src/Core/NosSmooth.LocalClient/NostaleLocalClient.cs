@@ -36,7 +36,7 @@ public class NostaleLocalClient : BaseNostaleClient
     private readonly PetManagerBinding _petManagerBinding;
     private readonly ControlCommands _controlCommands;
     private readonly IPacketSerializer _packetSerializer;
-    private readonly IPacketHandler _packetHandler;
+    private readonly PacketHandler _packetHandler;
     private readonly UserActionDetector _userActionDetector;
     private readonly ILogger _logger;
     private readonly IServiceProvider _provider;
@@ -66,7 +66,7 @@ public class NostaleLocalClient : BaseNostaleClient
         ControlCommands controlCommands,
         CommandProcessor commandProcessor,
         IPacketSerializer packetSerializer,
-        IPacketHandler packetHandler,
+        PacketHandler packetHandler,
         UserActionDetector userActionDetector,
         ILogger<NostaleLocalClient> logger,
         IOptions<LocalClientOptions> options,
@@ -204,17 +204,8 @@ public class NostaleLocalClient : BaseNostaleClient
                 packet = packetResult.Entity;
             }
 
-            Result result;
-            if (type == PacketSource.Server)
-            {
-                result = await _packetHandler.HandleReceivedPacketAsync
-                    (this, packet, packetString, _stopRequested ?? default);
-            }
-            else
-            {
-                result = await _packetHandler.HandleSentPacketAsync
-                    (this, packet, packetString, _stopRequested ?? default);
-            }
+            Result result = await _packetHandler.HandlePacketAsync
+                (this, type, packet, packetString, _stopRequested ?? default);
 
             if (!result.IsSuccess)
             {
@@ -230,11 +221,14 @@ public class NostaleLocalClient : BaseNostaleClient
 
     private bool FollowEntity(MapBaseObj? obj)
     {
-        Task.Run
-        (
-            async () => await _controlCommands.CancelAsync
-                (ControlCommandsFilter.UserCancellable, false, (CancellationToken)_stopRequested!)
-        );
+        if (obj is not null)
+        {
+            Task.Run
+            (
+                async () => await _controlCommands.CancelAsync
+                    (ControlCommandsFilter.UserCancellable, false, (CancellationToken)_stopRequested!)
+            );
+        }
         return true;
     }
 
