@@ -6,6 +6,7 @@
 
 using System.Diagnostics;
 using NosSmooth.LocalBinding.Errors;
+using NosSmooth.LocalBinding.Extensions;
 using NosSmooth.LocalBinding.Options;
 using NosSmooth.LocalBinding.Structs;
 using Reloaded.Hooks.Definitions;
@@ -146,9 +147,9 @@ public class PlayerManagerBinding
     /// </summary>
     public void EnableHooks()
     {
-        _followHook.Enable();
-        _unfollowHook.Enable();
-        _walkHook.Enable();
+        _followHook.EnableOrActivate();
+        _unfollowHook.EnableOrActivate();
+        _walkHook.EnableOrActivate();
     }
 
     /// <summary>

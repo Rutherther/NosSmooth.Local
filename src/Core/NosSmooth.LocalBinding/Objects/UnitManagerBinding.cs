@@ -10,7 +10,6 @@ using NosSmooth.LocalBinding.Extensions;
 using NosSmooth.LocalBinding.Options;
 using NosSmooth.LocalBinding.Structs;
 using Reloaded.Hooks.Definitions;
-using Reloaded.Hooks.Definitions.Enums;
 using Reloaded.Hooks.Definitions.X86;
 using Remora.Results;
 
@@ -122,7 +121,7 @@ public class UnitManagerBinding
     /// </summary>
     public void EnableHooks()
     {
-        _focusHook.Enable();
+        _focusHook.EnableOrActivate();
     }
 
     /// <summary>

@@ -7,6 +7,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using NosSmooth.LocalBinding.Errors;
+using NosSmooth.LocalBinding.Extensions;
 using NosSmooth.LocalBinding.Options;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.X86;
@@ -153,8 +154,8 @@ public class NetworkBinding
     /// </summary>
     public void EnableHooks()
     {
-        _receiveHook.Enable();
-        _sendHook.Enable();
+        _receiveHook.EnableOrActivate();
+        _sendHook.EnableOrActivate();
     }
 
     /// <summary>

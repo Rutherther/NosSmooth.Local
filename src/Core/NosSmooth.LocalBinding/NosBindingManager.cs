@@ -363,10 +363,9 @@ public class NosBindingManager : IDisposable
                 callbackFunction,
                 walkFunctionAddress.Offset + (int)_browserManager.Process.MainModule!.BaseAddress + options.Offset
             );
-            hook.Activate();
-            if (!options.Hook)
+            if (options.Hook)
             {
-                hook.Disable();
+                hook.Activate();
             }
 
             return Result<IHook<TFunction>>.FromSuccess(hook);

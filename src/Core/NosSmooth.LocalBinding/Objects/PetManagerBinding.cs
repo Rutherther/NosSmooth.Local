@@ -4,6 +4,7 @@
 //  Copyright (c) František Boháček. All rights reserved.
 //  Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using NosSmooth.LocalBinding.Extensions;
 using NosSmooth.LocalBinding.Options;
 using NosSmooth.LocalBinding.Structs;
 using Reloaded.Hooks.Definitions;
@@ -102,7 +103,7 @@ public class PetManagerBinding
     /// </summary>
     public void EnableHooks()
     {
-        _petWalkHook.Enable();
+        _petWalkHook.EnableOrActivate();
     }
 
     /// <summary>
