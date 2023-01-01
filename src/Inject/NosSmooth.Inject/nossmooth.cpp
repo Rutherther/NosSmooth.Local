@@ -42,8 +42,11 @@ void* get_export(void*, const char*);
 
 void* load_library(const char_t* path)
 {
-    HMODULE h = ::LoadLibraryW(path);
-    assert(h != nullptr);
+    HMODULE h = ::GetModuleHandleW(path);
+    if (h == nullptr) {
+        h = ::LoadLibraryW(path);
+        assert(h != nullptr);
+    }
     return (void*)h;
 }
 void* get_export(void* h, const char* name)
@@ -79,7 +82,7 @@ load_assembly_and_get_function_pointer_fn get_dotnet_load_assembly(const char_t*
     void* load_assembly_and_get_function_pointer = nullptr;
     hostfxr_handle cxt = nullptr;
     int rc = init_fptr(config_path, nullptr, &cxt);
-    if (rc != 0 || cxt == nullptr)
+    if (rc > 1 || cxt == nullptr)
     {
         std::cerr << "Init failed: " << std::hex << std::showbase << rc << std::endl;
         close_fptr(cxt);
