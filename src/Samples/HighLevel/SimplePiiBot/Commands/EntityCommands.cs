@@ -7,6 +7,7 @@
 using NosSmooth.ChatCommands;
 using NosSmooth.Extensions.Combat.Errors;
 using NosSmooth.Game;
+using NosSmooth.LocalBinding;
 using NosSmooth.LocalBinding.Objects;
 using NosSmooth.LocalBinding.Structs;
 using Remora.Commands.Attributes;
@@ -21,6 +22,7 @@ namespace SimplePiiBot.Commands;
 public class EntityCommands : CommandGroup
 {
     private readonly Game _game;
+    private readonly NosThreadSynchronizer _synchronizer;
     private readonly UnitManagerBinding _unitManagerBinding;
     private readonly SceneManager _sceneManager;
     private readonly PlayerManagerBinding _playerManagerBinding;
@@ -30,6 +32,7 @@ public class EntityCommands : CommandGroup
     /// Initializes a new instance of the <see cref="EntityCommands"/> class.
     /// </summary>
     /// <param name="game">The game.</param>
+    /// <param name="synchronizer">The thread synchronizer.</param>
     /// <param name="unitManagerBinding">The scene manager binding.</param>
     /// <param name="sceneManager">The scene manager.</param>
     /// <param name="playerManagerBinding">The character binding.</param>
@@ -37,6 +40,7 @@ public class EntityCommands : CommandGroup
     public EntityCommands
     (
         Game game,
+        NosThreadSynchronizer synchronizer,
         UnitManagerBinding unitManagerBinding,
         SceneManager sceneManager,
         PlayerManagerBinding playerManagerBinding,
@@ -44,6 +48,7 @@ public class EntityCommands : CommandGroup
     )
     {
         _game = game;
+        _synchronizer = synchronizer;
         _unitManagerBinding = unitManagerBinding;
         _sceneManager = sceneManager;
         _playerManagerBinding = playerManagerBinding;
@@ -100,15 +105,19 @@ public class EntityCommands : CommandGroup
     /// <param name="entityId">The entity id to focus.</param>
     /// <returns>A task that may or may not have succeeded.</returns>
     [Command("focus")]
-    public Task<Result> HandleFocusAsync(int entityId)
+    public async Task<Result> HandleFocusAsync(int entityId)
     {
         var entityResult = _sceneManager.FindEntity(entityId);
         if (!entityResult.IsSuccess)
         {
-            return Task.FromResult(Result.FromError(entityResult));
+            return Result.FromError(entityResult);
         }
 
-        return Task.FromResult(_unitManagerBinding.FocusEntity(entityResult.Entity));
+        return await _synchronizer.SynchronizeAsync
+        (
+            () => _unitManagerBinding.FocusEntity(entityResult.Entity),
+            CancellationToken
+        );
     }
 
     /// <summary>
@@ -117,15 +126,19 @@ public class EntityCommands : CommandGroup
     /// <param name="entityId">The entity id to follow.</param>
     /// <returns>A task that may or may not have succeeded.</returns>
     [Command("follow")]
-    public Task<Result> HandleFollowAsync(int entityId)
+    public async Task<Result> HandleFollowAsync(int entityId)
     {
         var entityResult = _sceneManager.FindEntity(entityId);
         if (!entityResult.IsSuccess)
         {
-            return Task.FromResult(Result.FromError(entityResult));
+            return Result.FromError(entityResult);
         }
 
-        return Task.FromResult(_playerManagerBinding.FollowEntity(entityResult.Entity));
+        return await _synchronizer.SynchronizeAsync
+        (
+            () => _playerManagerBinding.FollowEntity(entityResult.Entity),
+            CancellationToken
+        );
     }
 
     /// <summary>
@@ -133,8 +146,12 @@ public class EntityCommands : CommandGroup
     /// </summary>
     /// <returns>A task that may or may not have succeeded.</returns>
     [Command("unfollow")]
-    public Task<Result> HandleUnfollowAsync()
+    public async Task<Result> HandleUnfollowAsync()
     {
-        return Task.FromResult(_playerManagerBinding.UnfollowEntity());
+        return await _synchronizer.SynchronizeAsync
+        (
+            () => _playerManagerBinding.UnfollowEntity(),
+            CancellationToken
+        );
     }
 }

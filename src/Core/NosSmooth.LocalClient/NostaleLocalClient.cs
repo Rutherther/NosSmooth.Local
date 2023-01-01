@@ -12,6 +12,7 @@ using NosSmooth.Core.Commands;
 using NosSmooth.Core.Commands.Control;
 using NosSmooth.Core.Extensions;
 using NosSmooth.Core.Packets;
+using NosSmooth.LocalBinding;
 using NosSmooth.LocalBinding.Objects;
 using NosSmooth.LocalBinding.Structs;
 using NosSmooth.Packets;
@@ -31,6 +32,7 @@ namespace NosSmooth.LocalClient;
 /// </remarks>
 public class NostaleLocalClient : BaseNostaleClient
 {
+    private readonly NosThreadSynchronizer _synchronizer;
     private readonly NetworkBinding _networkBinding;
     private readonly PlayerManagerBinding _playerManagerBinding;
     private readonly PetManagerBinding _petManagerBinding;
@@ -47,6 +49,7 @@ public class NostaleLocalClient : BaseNostaleClient
     /// <summary>
     /// Initializes a new instance of the <see cref="NostaleLocalClient"/> class.
     /// </summary>
+    /// <param name="synchronizer">The thread synchronizer.</param>
     /// <param name="networkBinding">The network binding.</param>
     /// <param name="playerManagerBinding">The player manager binding.</param>
     /// <param name="petManagerBinding">The pet manager binding.</param>
@@ -60,6 +63,7 @@ public class NostaleLocalClient : BaseNostaleClient
     /// <param name="provider">The dependency injection provider.</param>
     public NostaleLocalClient
     (
+        NosThreadSynchronizer synchronizer,
         NetworkBinding networkBinding,
         PlayerManagerBinding playerManagerBinding,
         PetManagerBinding petManagerBinding,
@@ -75,6 +79,7 @@ public class NostaleLocalClient : BaseNostaleClient
         : base(commandProcessor, packetSerializer)
     {
         _options = options.Value;
+        _synchronizer = synchronizer;
         _networkBinding = networkBinding;
         _playerManagerBinding = playerManagerBinding;
         _petManagerBinding = petManagerBinding;
@@ -91,6 +96,7 @@ public class NostaleLocalClient : BaseNostaleClient
     {
         _stopRequested = stopRequested;
         _logger.LogInformation("Starting local client");
+        _synchronizer.StartSynchronizer();
         _networkBinding.PacketSend += SendCallback;
         _networkBinding.PacketReceive += ReceiveCallback;
 
@@ -170,13 +176,19 @@ public class NostaleLocalClient : BaseNostaleClient
 
     private void SendPacket(string packetString)
     {
-        _networkBinding.SendPacket(packetString);
+        _synchronizer.EnqueueOperation
+        (
+            () => _networkBinding.SendPacket(packetString)
+        );
         _logger.LogDebug($"Sending client packet {packetString}");
     }
 
     private void ReceivePacket(string packetString)
     {
-        _networkBinding.ReceivePacket(packetString);
+        _synchronizer.EnqueueOperation
+        (
+            () => _networkBinding.ReceivePacket(packetString)
+        );
         _logger.LogDebug($"Receiving client packet {packetString}");
     }
 
@@ -205,7 +217,13 @@ public class NostaleLocalClient : BaseNostaleClient
             }
 
             Result result = await _packetHandler.HandlePacketAsync
-                (this, type, packet, packetString, _stopRequested ?? default);
+            (
+                this,
+                type,
+                packet,
+                packetString,
+                _stopRequested ?? default
+            );
 
             if (!result.IsSuccess)
             {

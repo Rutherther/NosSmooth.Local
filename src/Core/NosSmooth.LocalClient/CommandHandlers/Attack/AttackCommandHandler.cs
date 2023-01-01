@@ -9,6 +9,7 @@ using NosSmooth.Core.Commands;
 using NosSmooth.Core.Commands.Attack;
 using NosSmooth.Core.Commands.Control;
 using NosSmooth.Core.Extensions;
+using NosSmooth.LocalBinding;
 using NosSmooth.LocalBinding.Objects;
 using NosSmooth.LocalBinding.Structs;
 using Remora.Results;
@@ -21,6 +22,7 @@ namespace NosSmooth.LocalClient.CommandHandlers.Attack;
 public class AttackCommandHandler : ICommandHandler<AttackCommand>
 {
     private readonly INostaleClient _nostaleClient;
+    private readonly NosThreadSynchronizer _synchronizer;
     private readonly UnitManagerBinding _unitManagerBinding;
     private readonly SceneManager _sceneManager;
 
@@ -28,12 +30,19 @@ public class AttackCommandHandler : ICommandHandler<AttackCommand>
     /// Initializes a new instance of the <see cref="AttackCommandHandler"/> class.
     /// </summary>
     /// <param name="nostaleClient">The NosTale client.</param>
+    /// <param name="synchronizer">The thread synchronizer.</param>
     /// <param name="unitManagerBinding">The unit manager binding.</param>
     /// <param name="sceneManager">The scene manager.</param>
     public AttackCommandHandler
-        (INostaleClient nostaleClient, UnitManagerBinding unitManagerBinding, SceneManager sceneManager)
+    (
+        INostaleClient nostaleClient,
+        NosThreadSynchronizer synchronizer,
+        UnitManagerBinding unitManagerBinding,
+        SceneManager sceneManager
+    )
     {
         _nostaleClient = nostaleClient;
+        _synchronizer = synchronizer;
         _unitManagerBinding = unitManagerBinding;
         _sceneManager = sceneManager;
     }
@@ -46,7 +55,7 @@ public class AttackCommandHandler : ICommandHandler<AttackCommand>
             var entityResult = _sceneManager.FindEntity(command.TargetId.Value);
             if (entityResult.IsDefined(out var entity))
             {
-                _unitManagerBinding.FocusEntity(entity);
+                _synchronizer.EnqueueOperation(() => _unitManagerBinding.FocusEntity(entity));
             }
         }
 
