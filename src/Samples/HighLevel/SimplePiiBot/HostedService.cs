@@ -13,6 +13,8 @@ using NosSmooth.Data.NOSFiles;
 using NosSmooth.LocalBinding;
 using NosSmooth.Packets.Extensions;
 using NosSmooth.Packets.Packets;
+using OneOf.Types;
+using Remora.Results;
 
 namespace SimplePiiBot;
 
@@ -65,7 +67,7 @@ public class HostedService : BackgroundService
             return;
         }
 
-        var filesResult = _filesManager.Initialize();
+        var filesResult = InitializeFileManager();
         if (!filesResult.IsSuccess)
         {
             _logger.LogResultError(filesResult);
@@ -85,5 +87,22 @@ public class HostedService : BackgroundService
             _logger.LogResultError(runResult);
             await _lifetime.StopAsync(default);
         }
+    }
+
+    private int _maxRetries = 10;
+
+    private Result InitializeFileManager()
+    {
+        var filesResult = _filesManager.Initialize();
+
+        if (_maxRetries-- > 0 && !filesResult.IsSuccess && filesResult.Error is ExceptionError exceptionError
+            && exceptionError.Exception is IOException ioException && ioException.HResult == -2147024864)
+        { // could not load files, the NosTale may be just starting an using .NOS files, retry few times.
+            _logger.LogWarning($"Could not obtain .NOS files. Going to retry. {ioException.Message}");
+            Thread.Sleep(1000);
+            return InitializeFileManager();
+        }
+
+        return filesResult;
     }
 }
