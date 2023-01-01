@@ -19,8 +19,15 @@ public static class MemoryExtensions
     /// <param name="memory">The memory.</param>
     /// <param name="staticAddress">The static address to follow offsets from.</param>
     /// <param name="offsets">The offsets, first offset is the 0-th element.</param>
+    /// <param name="lastOffset">The last offset without evaluating a pointer.</param>
     /// <returns>A final address.</returns>
-    public static nuint FollowStaticAddressOffsets(this IMemory memory, int staticAddress, int[] offsets)
+    public static nuint FollowStaticAddressOffsets
+    (
+        this IMemory memory,
+        int staticAddress,
+        int[] offsets,
+        int lastOffset = 0
+    )
     {
         int address = staticAddress;
         foreach (var offset in offsets)
@@ -28,6 +35,6 @@ public static class MemoryExtensions
             memory.SafeRead((nuint)(address + offset), out address);
         }
 
-        return (nuint)address;
+        return (nuint)(address + lastOffset);
     }
 }
