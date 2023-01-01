@@ -161,6 +161,11 @@ public class NosBindingManager : IDisposable
     /// <returns>A result that may or may not have succeeded.</returns>
     public IResult Initialize()
     {
+        if (_networkBinding is not null)
+        { // already initialized
+            return Result.FromSuccess();
+        }
+
         List<IResult> errorResults = new List<IResult>();
         var browserInitializationResult = _browserManager.Initialize();
         if (!browserInitializationResult.IsSuccess)
