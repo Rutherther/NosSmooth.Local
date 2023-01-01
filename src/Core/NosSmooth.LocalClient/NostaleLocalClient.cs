@@ -14,10 +14,10 @@ using NosSmooth.Core.Extensions;
 using NosSmooth.Core.Packets;
 using NosSmooth.LocalBinding.Objects;
 using NosSmooth.LocalBinding.Structs;
-using NosSmooth.LocalClient.CommandHandlers.Walk;
 using NosSmooth.Packets;
-using NosSmooth.Packets.Errors;
+using NosSmooth.PacketSerializer;
 using NosSmooth.PacketSerializer.Abstractions.Attributes;
+using NosSmooth.PacketSerializer.Errors;
 using Remora.Results;
 
 namespace NosSmooth.LocalClient;
