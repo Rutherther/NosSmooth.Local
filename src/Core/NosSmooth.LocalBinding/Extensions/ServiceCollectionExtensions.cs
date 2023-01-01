@@ -41,4 +41,18 @@ public static class ServiceCollectionExtensions
             .AddSingleton(p => p.GetRequiredService<NosBindingManager>().UnitManager)
             .AddSingleton(p => p.GetRequiredService<NosBindingManager>().Network);
     }
+
+    /// <summary>
+    /// Configures what functions to hook and allows the user to make pattern, offset changes.
+    /// </summary>
+    /// <param name="serviceCollection">The service collection.</param>
+    /// <param name="configure">Function for configuring the hook config.</param>
+    /// <returns>The collection.</returns>
+    public static IServiceCollection ConfigureHooks(this IServiceCollection serviceCollection, Action<HooksConfigBuilder> configure)
+    {
+        var builder = new HooksConfigBuilder();
+        configure(builder);
+        builder.Apply(serviceCollection);
+        return serviceCollection;
+    }
 }

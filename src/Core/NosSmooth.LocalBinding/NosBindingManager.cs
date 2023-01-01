@@ -307,7 +307,7 @@ public class NosBindingManager : IDisposable
     }
 
     /// <summary>
-    /// Disable the currently enabled nostale hooks.
+    /// Disable the currently enabled NosTale hooks.
     /// </summary>
     /// <returns>A result that may or may not have succeeded.</returns>
     public Result DisableHooks()
@@ -336,24 +336,20 @@ public class NosBindingManager : IDisposable
     /// </summary>
     /// <param name="name">The name of the binding.</param>
     /// <param name="callbackFunction">The callback function to call instead of the original one.</param>
-    /// <param name="pattern">The pattern.</param>
-    /// <param name="offset">The offset from the pattern.</param>
-    /// <param name="enableHook">Whether to activate the hook.</param>
+    /// <param name="options">The options for the function hook. (pattern, offset, whether to activate).</param>
     /// <typeparam name="TFunction">The type of the function.</typeparam>
     /// <returns>The hook object or an error.</returns>
     internal Result<IHook<TFunction>> CreateHookFromPattern<TFunction>
     (
         string name,
         TFunction callbackFunction,
-        string pattern,
-        int offset = 0,
-        bool enableHook = true
+        HookOptions options
     )
     {
-        var walkFunctionAddress = Scanner.FindPattern(pattern);
+        var walkFunctionAddress = Scanner.FindPattern(options.MemoryPattern);
         if (!walkFunctionAddress.Found)
         {
-            return new BindingNotFoundError(pattern, name);
+            return new BindingNotFoundError(options.MemoryPattern, name);
         }
 
         try
@@ -361,11 +357,12 @@ public class NosBindingManager : IDisposable
             var hook = Hooks.CreateHook
             (
                 callbackFunction,
-                walkFunctionAddress.Offset + (int)_browserManager.Process.MainModule!.BaseAddress + offset
+                walkFunctionAddress.Offset + (int)_browserManager.Process.MainModule!.BaseAddress + options.Offset
             );
-            if (enableHook)
+            hook.Activate();
+            if (!options.Hook)
             {
-                hook.Activate();
+                hook.Disable();
             }
 
             return Result<IHook<TFunction>>.FromSuccess(hook);

@@ -14,14 +14,16 @@ namespace NosSmooth.LocalBinding.Options;
 public class NetworkBindingOptions
 {
     /// <summary>
-    /// Gets or sets whether to hook the send packet function.
+    /// Gets or sets the configuration for packet receive function hook.
     /// </summary>
-    public bool HookSend { get; set; } = true;
+    public HookOptions PacketReceiveHook { get; set; }
+        = new HookOptions(true, "55 8B EC 83 C4 ?? 53 56 57 33 C9 89 4D ?? 89 4D ?? 89 55 ?? 8B D8 8B 45 ??", 0);
 
     /// <summary>
-    /// Gets or sets whether to hook the receive packet function.
+    /// Gets or sets the configuration for packet send function hook.
     /// </summary>
-    public bool HookReceive { get; set; } = true;
+    public HookOptions PacketSendHook { get; set; }
+        = new HookOptions(true, "53 56 8B F2 8B D8 EB 04", 0);
 
     /// <summary>
     /// Gets or sets the pattern to find the network object at.
@@ -31,14 +33,4 @@ public class NetworkBindingOptions
     /// </remarks>
     public string NetworkObjectPattern { get; set; }
         = "A1 ?? ?? ?? ?? 8B 00 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? A1 ?? ?? ?? ?? 8B 00 8B 40 40";
-
-    /// <summary>
-    /// Gets or sets the pattern to find the send packet function at.
-    /// </summary>
-    public string SendFunctionPattern { get; set; } = "53 56 8B F2 8B D8 EB 04";
-
-    /// <summary>
-    /// Gets or sets the pattern to find the receive function at.
-    /// </summary>
-    public string ReceiveFunctionPattern { get; set; } = "55 8B EC 83 C4 ?? 53 56 57 33 C9 89 4D ?? 89 4D ?? 89 55 ?? 8B D8 8B 45 ??";
 }

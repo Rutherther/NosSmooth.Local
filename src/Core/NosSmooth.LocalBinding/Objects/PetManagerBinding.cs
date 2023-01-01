@@ -35,8 +35,7 @@ public class PetManagerBinding
         (
             "PetManagerBinding.PetWalk",
             petManager.PetWalkDetour,
-            options.PetWalkPattern,
-            enableHook: options.HookPetWalk
+            options.PetWalkHook
         );
 
         if (!hookResult.IsSuccess)

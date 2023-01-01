@@ -61,96 +61,53 @@ public class PlayerManagerBinding
     /// <returns>A network binding or an error.</returns>
     public static Result<PlayerManagerBinding> Create(NosBindingManager bindingManager, PlayerManager playerManager, CharacterBindingOptions options)
     {
-        var process = Process.GetCurrentProcess();
-
-        var walkFunctionAddress = bindingManager.Scanner.FindPattern(options.WalkFunctionPattern);
-        if (!walkFunctionAddress.Found)
-        {
-            return new BindingNotFoundError(options.WalkFunctionPattern, "CharacterBinding.Walk");
-        }
-
-        var followEntityAddress = bindingManager.Scanner.FindPattern(options.FollowEntityPattern);
-        if (!followEntityAddress.Found)
-        {
-            return new BindingNotFoundError(options.FollowEntityPattern, "CharacterBinding.FollowEntity");
-        }
-
-        var unfollowEntityAddress = bindingManager.Scanner.FindPattern(options.UnfollowEntityPattern);
-        if (!unfollowEntityAddress.Found)
-        {
-            return new BindingNotFoundError(options.UnfollowEntityPattern, "CharacterBinding.UnfollowEntity");
-        }
-
-        var walkFunction = bindingManager.Hooks.CreateFunction<WalkDelegate>
-            (walkFunctionAddress.Offset + (int)process.MainModule!.BaseAddress);
-        var walkWrapper = walkFunction.GetWrapper();
-
-        var followEntityFunction = bindingManager.Hooks.CreateFunction<FollowEntityDelegate>
-            (followEntityAddress.Offset + (int)process.MainModule!.BaseAddress);
-        var followEntityWrapper = followEntityFunction.GetWrapper();
-
-        var unfollowEntityFunction = bindingManager.Hooks.CreateFunction<UnfollowEntityDelegate>
-            (unfollowEntityAddress.Offset + (int)process.MainModule!.BaseAddress);
-        var unfollowEntityWrapper = unfollowEntityFunction.GetWrapper();
-
         var binding = new PlayerManagerBinding
         (
             bindingManager,
-            playerManager,
-            walkWrapper,
-            followEntityWrapper,
-            unfollowEntityWrapper
+            playerManager
         );
 
-        if (options.HookWalk)
+        var walkHookResult = bindingManager.CreateHookFromPattern<WalkDelegate>
+            ("CharacterBinding.Walk", binding.WalkDetour, options.WalkHook);
+        if (!walkHookResult.IsDefined(out var walkHook))
         {
-            binding._walkHook = walkFunction
-                .Hook(binding.WalkDetour);
-            binding._originalWalk = binding._walkHook.OriginalFunction;
+            return Result<PlayerManagerBinding>.FromError(walkHookResult);
         }
 
-        if (options.HookFollowEntity)
+        var entityFollowHookResult = bindingManager.CreateHookFromPattern<FollowEntityDelegate>
+            ("CharacterBinding.EntityFollow", binding.FollowEntityDetour, options.EntityFollowHook);
+        if (!entityFollowHookResult.IsDefined(out var entityFollowHook))
         {
-            binding._followHook = followEntityFunction.Hook(binding.FollowEntityDetour);
-            binding._originalFollowEntity = binding._followHook.OriginalFunction;
+            return Result<PlayerManagerBinding>.FromError(entityFollowHookResult);
         }
 
-        if (options.HookUnfollowEntity)
+        var entityUnfollowHookResult = bindingManager.CreateHookFromPattern<UnfollowEntityDelegate>
+            ("CharacterBinding.EntityUnfollow", binding.UnfollowEntityDetour, options.EntityUnfollowHook);
+        if (!entityUnfollowHookResult.IsDefined(out var entityUnfollowHook))
         {
-            binding._unfollowHook = unfollowEntityFunction.Hook(binding.UnfollowEntityDetour);
-            binding._originalUnfollowEntity = binding._unfollowHook.OriginalFunction;
+            return Result<PlayerManagerBinding>.FromError(entityUnfollowHookResult);
         }
 
-        binding._walkHook?.Activate();
-        binding._followHook?.Activate();
-        binding._unfollowHook?.Activate();
+        binding._walkHook = walkHook;
+        binding._followHook = entityFollowHook;
+        binding._unfollowHook = entityUnfollowHook;
         return binding;
     }
 
     private readonly NosBindingManager _bindingManager;
 
-    private IHook<WalkDelegate>? _walkHook;
-    private IHook<FollowEntityDelegate>? _followHook;
-    private IHook<UnfollowEntityDelegate>? _unfollowHook;
-
-    private FollowEntityDelegate _originalFollowEntity;
-    private UnfollowEntityDelegate _originalUnfollowEntity;
-    private WalkDelegate _originalWalk;
+    private IHook<WalkDelegate> _walkHook = null!;
+    private IHook<FollowEntityDelegate> _followHook = null!;
+    private IHook<UnfollowEntityDelegate> _unfollowHook = null!;
 
     private PlayerManagerBinding
     (
         NosBindingManager bindingManager,
-        PlayerManager playerManager,
-        WalkDelegate originalWalk,
-        FollowEntityDelegate originalFollowEntity,
-        UnfollowEntityDelegate originalUnfollowEntity
+        PlayerManager playerManager
     )
     {
         PlayerManager = playerManager;
         _bindingManager = bindingManager;
-        _originalWalk = originalWalk;
-        _originalFollowEntity = originalFollowEntity;
-        _originalUnfollowEntity = originalUnfollowEntity;
     }
 
     /// <summary>
@@ -195,7 +152,7 @@ public class PlayerManagerBinding
         int param = ((ushort)y << 16) | (ushort)x;
         try
         {
-            return _originalWalk(PlayerManager.Address, param);
+            return _walkHook.OriginalFunction(PlayerManager.Address, param);
         }
         catch (Exception e)
         {
@@ -208,7 +165,7 @@ public class PlayerManagerBinding
         var result = WalkCall?.Invoke((ushort)(position & 0xFFFF), (ushort)((position >> 16) & 0xFFFF));
         if (result ?? true)
         {
-            return _originalWalk(characterObject, position, unknown0, unknown1);
+            return _walkHook.OriginalFunction(characterObject, position, unknown0, unknown1);
         }
 
         return false;
@@ -231,7 +188,7 @@ public class PlayerManagerBinding
     {
         try
         {
-            _originalFollowEntity(PlayerManager.Address, entityAddress);
+            _followHook.OriginalFunction(PlayerManager.Address, entityAddress);
         }
         catch (Exception e)
         {
@@ -249,7 +206,7 @@ public class PlayerManagerBinding
     {
         try
         {
-            _originalUnfollowEntity(PlayerManager.Address);
+            _unfollowHook.OriginalFunction(PlayerManager.Address);
         }
         catch (Exception e)
         {
@@ -270,7 +227,7 @@ public class PlayerManagerBinding
         var result = FollowEntityCall?.Invoke(new MapBaseObj(_bindingManager.Memory, entityPtr));
         if (result ?? true)
         {
-            return _originalFollowEntity(playerManagerPtr, entityPtr, unknown1, unknown2);
+            return _followHook.OriginalFunction(playerManagerPtr, entityPtr, unknown1, unknown2);
         }
 
         return false;
@@ -281,7 +238,7 @@ public class PlayerManagerBinding
         var result = FollowEntityCall?.Invoke(null);
         if (result ?? true)
         {
-            _originalUnfollowEntity(playerManagerPtr, unknown);
+            _unfollowHook.OriginalFunction(playerManagerPtr, unknown);
         }
     }
 }

@@ -26,13 +26,8 @@ public class UnitManagerBindingOptions
         = { 1, 0 };
 
     /// <summary>
-    /// Gets or sets the pattern to find the focus entity method at.
+    /// Gets or sets the configuration for entity focus function hook.
     /// </summary>
-    public string FocusEntityPattern { get; set; }
-        = "73 00 00 00 55 8b ec b9 05 00 00 00";
-
-    /// <summary>
-    /// Gets or sets whether to hook the Focus entity function.
-    /// </summary>
-    public bool HookFocusEntity { get; set; } = true;
+    public HookOptions EntityFocusHook { get; set; }
+        = new HookOptions(false, "73 00 00 00 55 8b ec b9 05 00 00 00", 4);
 }

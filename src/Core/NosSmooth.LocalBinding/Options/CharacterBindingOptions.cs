@@ -14,34 +14,19 @@ namespace NosSmooth.LocalBinding.Options;
 public class CharacterBindingOptions
 {
     /// <summary>
-    /// Gets or sets whether to hook the walk function.
+    /// Gets or sets the configuration for player walk function hook.
     /// </summary>
-    public bool HookWalk { get; set; } = true;
+    public HookOptions WalkHook { get; set; } = new HookOptions(false, "55 8B EC 83 C4 EC 53 56 57 66 89 4D FA", 0);
 
     /// <summary>
-    /// Gets or sets the pattern to find the walk function at.
+    /// Gets or sets the configuration for entity follow function hook.
     /// </summary>
-    public string WalkFunctionPattern { get; set; } = "55 8B EC 83 C4 EC 53 56 57 66 89 4D FA";
+    public HookOptions EntityFollowHook { get; set; }
+        = new HookOptions(false, "55 8B EC 51 53 56 57 88 4D FF 8B F2 8B F8", 0);
 
     /// <summary>
-    /// Gets or sets the pattern to find the follow entity method at.
+    /// Gets or sets the configuration for entity unfollow function hook.
     /// </summary>
-    public string FollowEntityPattern { get; set; }
-        = "55 8B EC 51 53 56 57 88 4D FF 8B F2 8B F8";
-
-    /// <summary>
-    /// Gets or sets the pattern to find the unfollow entity method at.
-    /// </summary>
-    public string UnfollowEntityPattern { get; set; }
-        = "80 78 14 00 74 1A";
-
-    /// <summary>
-    /// Gets or sets whether to hook the follow entity function.
-    /// </summary>
-    public bool HookFollowEntity { get; set; } = true;
-
-    /// <summary>
-    /// Gets or sets whether to hook the unfollow entity function.
-    /// </summary>
-    public bool HookUnfollowEntity { get; set; } = true;
+    public HookOptions EntityUnfollowHook { get; set; }
+        = new HookOptions(false, "80 78 14 00 74 1A", 0);
 }

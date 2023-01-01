@@ -31,7 +31,7 @@ public class UnitManagerBinding
         FunctionAttribute.StackCleanup.Callee,
         new[] { FunctionAttribute.Register.ebx, FunctionAttribute.Register.esi, FunctionAttribute.Register.edi, FunctionAttribute.Register.ebp }
     )]
-    private delegate int FocusEntityDelegate(nuint unitManagerPtr, nuint entityPtr);
+    private delegate nuint FocusEntityDelegate(nuint unitManagerPtr, nuint entityPtr);
 
     /// <summary>
     /// Create the scene manager binding.
@@ -50,31 +50,21 @@ public class UnitManagerBinding
             return new BindingNotFoundError(bindingOptions.UnitManagerPattern, "UnitManagerBinding.UnitManager");
         }
 
-        var focusEntityAddress = bindingManager.Scanner.FindPattern(bindingOptions.FocusEntityPattern);
-        if (!focusEntityAddress.Found)
-        {
-            return new BindingNotFoundError(bindingOptions.FocusEntityPattern, "UnitManagerBinding.FocusEntity");
-        }
-
-        var focusEntityFunction = bindingManager.Hooks.CreateFunction<FocusEntityDelegate>
-            (focusEntityAddress.Offset + (int)process.MainModule!.BaseAddress + 0x04);
-        var focusEntityWrapper = focusEntityFunction.GetWrapper();
-
         var binding = new UnitManagerBinding
         (
             bindingManager,
             (int)process.MainModule!.BaseAddress + unitManagerStaticAddress.Offset,
-            bindingOptions.UnitManagerOffsets,
-            focusEntityWrapper
+            bindingOptions.UnitManagerOffsets
         );
 
-        if (bindingOptions.HookFocusEntity)
+        var entityFocusHookResult = bindingManager.CreateHookFromPattern<FocusEntityDelegate>
+            ("UnitManager.EntityFocus", binding.FocusEntityDetour, bindingOptions.EntityFocusHook);
+        if (!entityFocusHookResult.IsDefined(out var entityFocusHook))
         {
-            binding._focusHook = focusEntityFunction.Hook(binding.FocusEntityDetour);
-            binding._originalFocusEntity = binding._focusHook.OriginalFunction;
+            return Result<UnitManagerBinding>.FromError(entityFocusHookResult);
         }
 
-        binding._focusHook?.Activate();
+        binding._focusHook = entityFocusHook;
         return binding;
     }
 
@@ -82,19 +72,16 @@ public class UnitManagerBinding
     private readonly int[] _unitManagerOffsets;
 
     private readonly NosBindingManager _bindingManager;
-    private FocusEntityDelegate _originalFocusEntity;
 
-    private IHook<FocusEntityDelegate>? _focusHook;
+    private IHook<FocusEntityDelegate> _focusHook = null!;
 
     private UnitManagerBinding
     (
         NosBindingManager bindingManager,
         int staticUnitManagerAddress,
-        int[] unitManagerOffsets,
-        FocusEntityDelegate originalFocusEntity
+        int[] unitManagerOffsets
     )
     {
-        _originalFocusEntity = originalFocusEntity;
         _bindingManager = bindingManager;
         _staticUnitManagerAddress = staticUnitManagerAddress;
         _unitManagerOffsets = unitManagerOffsets;
@@ -123,6 +110,22 @@ public class UnitManagerBinding
         => FocusEntity(entity?.Address ?? nuint.Zero);
 
     /// <summary>
+    /// Disable all UnitManager hooks.
+    /// </summary>
+    public void DisableHooks()
+    {
+        _focusHook.Disable();
+    }
+
+    /// <summary>
+    /// Enable all UnitManager hooks.
+    /// </summary>
+    public void EnableHooks()
+    {
+        _focusHook.Enable();
+    }
+
+    /// <summary>
     /// Focus the entity.
     /// </summary>
     /// <param name="entityAddress">The entity address.</param>
@@ -131,7 +134,7 @@ public class UnitManagerBinding
     {
         try
         {
-            _originalFocusEntity(Address, entityAddress);
+            _focusHook.OriginalFunction(Address, entityAddress);
         }
         catch (Exception e)
         {
@@ -141,7 +144,7 @@ public class UnitManagerBinding
         return Result.FromSuccess();
     }
 
-    private int FocusEntityDetour(nuint unitManagerPtr, nuint entityId)
+    private nuint FocusEntityDetour(nuint unitManagerPtr, nuint entityId)
     {
         MapBaseObj? obj = null;
         if (entityId != nuint.Zero)
@@ -150,9 +153,10 @@ public class UnitManagerBinding
         }
 
         var result = EntityFocus?.Invoke(obj);
+
         if (result ?? true)
         {
-            return _originalFocusEntity(unitManagerPtr, entityId);
+            return _focusHook.OriginalFunction(unitManagerPtr, entityId);
         }
 
         return 0;

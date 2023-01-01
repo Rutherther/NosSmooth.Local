@@ -52,72 +52,44 @@ public class NetworkBinding
             return new BindingNotFoundError(options.NetworkObjectPattern, "NetworkBinding");
         }
 
-        var packetSendAddress = bindingManager.Scanner.FindPattern(options.SendFunctionPattern);
-        if (!packetSendAddress.Found)
-        {
-            return new BindingNotFoundError(options.SendFunctionPattern, "NetworkBinding.SendPacket");
-        }
-
-        var packetReceiveAddress = bindingManager.Scanner.FindPattern(options.ReceiveFunctionPattern);
-        if (!packetReceiveAddress.Found)
-        {
-            return new BindingNotFoundError(options.ReceiveFunctionPattern, "NetworkBinding.ReceivePacket");
-        }
-
-        var sendFunction = bindingManager.Hooks.CreateFunction<PacketSendDelegate>
-            (packetSendAddress.Offset + (int)process.MainModule!.BaseAddress);
-        var sendWrapper = sendFunction.GetWrapper();
-
-        var receiveFunction = bindingManager.Hooks.CreateFunction<PacketReceiveDelegate>
-            (packetReceiveAddress.Offset + (int)process.MainModule!.BaseAddress);
-        var receiveWrapper = receiveFunction.GetWrapper();
-
         var binding = new NetworkBinding
         (
             bindingManager,
-            (nuint)(networkObjectAddress.Offset + (int)process.MainModule!.BaseAddress + 0x01),
-            sendWrapper,
-            receiveWrapper
+            (nuint)(networkObjectAddress.Offset + (int)process.MainModule!.BaseAddress + 0x01)
         );
 
-        if (options.HookSend)
+        var sendHookResult = bindingManager.CreateHookFromPattern<PacketSendDelegate>
+            ("NetworkBinding.SendPacket", binding.SendPacketDetour, options.PacketSendHook);
+        if (!sendHookResult.IsDefined(out var sendHook))
         {
-            binding._sendHook = sendFunction
-                .Hook(binding.SendPacketDetour);
-            binding._originalSend = binding._sendHook.OriginalFunction;
+            return Result<NetworkBinding>.FromError(sendHookResult);
         }
 
-        if (options.HookReceive)
+        var receiveHookResult = bindingManager.CreateHookFromPattern<PacketReceiveDelegate>
+            ("NetworkBinding.ReceivePacket", binding.ReceivePacketDetour, options.PacketReceiveHook);
+        if (!receiveHookResult.IsDefined(out var receiveHook))
         {
-            binding._receiveHook = receiveFunction
-                .Hook(binding.ReceivePacketDetour);
-            binding._originalReceive = binding._receiveHook.OriginalFunction;
+            return Result<NetworkBinding>.FromError(receiveHookResult);
         }
 
-        binding._sendHook?.Activate();
-        binding._receiveHook?.Activate();
+        binding._sendHook = sendHook;
+        binding._receiveHook = receiveHook;
         return binding;
     }
 
     private readonly NosBindingManager _bindingManager;
     private readonly nuint _networkManagerAddress;
-    private IHook<PacketSendDelegate>? _sendHook;
-    private IHook<PacketReceiveDelegate>? _receiveHook;
-    private PacketSendDelegate _originalSend;
-    private PacketReceiveDelegate _originalReceive;
+    private IHook<PacketSendDelegate> _sendHook = null!;
+    private IHook<PacketReceiveDelegate> _receiveHook = null!;
 
     private NetworkBinding
     (
         NosBindingManager bindingManager,
-        nuint networkManagerAddress,
-        PacketSendDelegate originalSend,
-        PacketReceiveDelegate originalReceive
+        nuint networkManagerAddress
     )
     {
         _bindingManager = bindingManager;
         _networkManagerAddress = networkManagerAddress;
-        _originalSend = originalSend;
-        _originalReceive = originalReceive;
     }
 
     /// <summary>
@@ -146,7 +118,7 @@ public class NetworkBinding
         try
         {
             using var nostaleString = NostaleStringA.Create(_bindingManager.Memory, packet);
-            _originalSend(GetManagerAddress(false), nostaleString.Get());
+            _sendHook.OriginalFunction(GetManagerAddress(false), nostaleString.Get());
         }
         catch (Exception e)
         {
@@ -166,7 +138,7 @@ public class NetworkBinding
         try
         {
             using var nostaleString = NostaleStringA.Create(_bindingManager.Memory, packet);
-            _originalReceive(GetManagerAddress(true), nostaleString.Get());
+            _receiveHook.OriginalFunction(GetManagerAddress(true), nostaleString.Get());
         }
         catch (Exception e)
         {
@@ -207,14 +179,14 @@ public class NetworkBinding
         var packet = Marshal.PtrToStringAnsi((IntPtr)packetString);
         if (packet is null)
         { // ?
-            _originalSend(packetObject, packetString);
+            _sendHook.OriginalFunction(packetObject, packetString);
         }
         else
         {
             var result = PacketSend?.Invoke(packet);
             if (result ?? true)
             {
-                _originalSend(packetObject, packetString);
+                _sendHook.OriginalFunction(packetObject, packetString);
             }
         }
     }
@@ -226,7 +198,7 @@ public class NetworkBinding
         var packet = Marshal.PtrToStringAnsi((IntPtr)packetString);
         if (packet is null)
         { // ?
-            _originalReceive(packetObject, packetString);
+            _receiveHook.OriginalFunction(packetObject, packetString);
         }
         else
         {
@@ -240,7 +212,7 @@ public class NetworkBinding
                 // TODO FIX THIS correctly
                 if (_receivedCancel || !packet.StartsWith("cancel"))
                 {
-                    _originalReceive(packetObject, packetString);
+                    _receiveHook.OriginalFunction(packetObject, packetString);
                 }
                 else
                 {
