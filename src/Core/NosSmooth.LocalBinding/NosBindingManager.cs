@@ -11,6 +11,9 @@ using NosSmooth.LocalBinding.Objects;
 using NosSmooth.LocalBinding.Options;
 using Reloaded.Hooks;
 using Reloaded.Hooks.Definitions;
+using Reloaded.Hooks.Definitions.Helpers;
+using Reloaded.Hooks.Tools;
+using Reloaded.Hooks.X86;
 using Reloaded.Memory.Sigscan;
 using Reloaded.Memory.Sources;
 using Remora.Results;
@@ -197,12 +200,14 @@ public class NosBindingManager : IDisposable
         }
         catch (Exception e)
         {
-            errorResults.Add(
+            errorResults.Add
+            (
                 Result.FromError
                 (
                     new CouldNotInitializeModuleError(typeof(NetworkBinding), new ExceptionError(e)),
                     (Result)new ExceptionError(e)
-                ));
+                )
+            );
         }
 
         try
@@ -374,6 +379,95 @@ public class NosBindingManager : IDisposable
             }
 
             return Result<IHook<TFunction>>.FromSuccess(hook);
+        }
+        catch (Exception e)
+        {
+            return e;
+        }
+    }
+
+    /// <summary>
+    /// Create custom assembler hook.
+    /// </summary>
+    /// <remarks>
+    /// Sometimes there are more requirements than Reloaded-Hooks handles
+    /// (or maybe I am just configuring it correctly).
+    ///
+    /// For these cases this method is here. It adds a detour call at the beginning
+    /// of a function. The detour function should return 1 to continue,
+    /// 0 to return at the beginning.
+    /// </remarks>
+    /// <param name="name">The name of the binding.</param>
+    /// <param name="callbackFunction">The callback function to call instead of the original one.</param>
+    /// <param name="options">The options for the function hook. (pattern, offset, whether to activate).</param>
+    /// <typeparam name="TFunction">The type of the function.</typeparam>
+    /// <returns>The hook object or an error.</returns>
+    internal Result<NosAsmHook<TFunction>>
+        CreateCustomAsmHookFromPattern<TFunction>
+        (
+            string name,
+            TFunction callbackFunction,
+            HookOptions options
+        )
+    {
+        var walkFunctionAddress = Scanner.FindPattern(options.MemoryPattern);
+        if (!walkFunctionAddress.Found)
+        {
+            return new BindingNotFoundError(options.MemoryPattern, name);
+        }
+
+        try
+        {
+            var address = walkFunctionAddress.Offset + (int)_browserManager.Process.MainModule!.BaseAddress
+                + options.Offset;
+            var wrapper = Hooks.CreateFunction<TFunction>(address);
+            var reverseWrapper = Hooks.CreateReverseWrapper<TFunction>(callbackFunction);
+            var callDetour = Utilities.GetAbsoluteCallMnemonics
+                (reverseWrapper.WrapperPointer.ToUnsigned(), IntPtr.Size == 8);
+
+            var hook = Hooks.CreateAsmHook
+            (
+                new[]
+                {
+                    "use32",
+                    "pushad",
+                    "pushfd",
+                    "push edx",
+                    "push eax",
+
+                    // call managed function
+                    callDetour,
+
+                    // check result
+                    // 1 means continue executing
+                    // 0 means do not permit the call
+                    "test eax, eax",
+                    "jnz rest",
+
+                    // returned 0, going to return early
+                    "pop eax",
+                    "pop edx",
+                    "popfd",
+                    "popad",
+                    "ret", // return early
+
+                    // returned 1, going to execute the function
+                    "rest:",
+                    "pop eax",
+                    "pop edx",
+                    "popfd",
+                    "popad"
+                },
+                address
+            );
+
+            if (options.Hook)
+            {
+                hook.Activate();
+            }
+
+            return Result<NosAsmHook<TFunction>>.FromSuccess
+                (new NosAsmHook<TFunction>(reverseWrapper, wrapper, hook));
         }
         catch (Exception e)
         {

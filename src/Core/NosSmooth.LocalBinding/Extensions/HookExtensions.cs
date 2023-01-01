@@ -29,4 +29,16 @@ public static class HookExtensions
             hook.Enable();
         }
     }
+
+    /// <summary>
+    /// Enables the hook if it is active.
+    /// Activate it if it wasn't activated.
+    /// </summary>
+    /// <param name="hook">The hook to enable or activate.</param>
+    public static void EnableOrActivate(this IAsmHook hook)
+    {
+        // asm hook does not activate if it was already activated.
+        hook.Activate();
+        hook.Enable();
+    }
 }
