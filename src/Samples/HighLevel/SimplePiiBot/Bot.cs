@@ -131,7 +131,7 @@ public class Bot : IStatefulEntity
                 (
                     entity.Id,
                     _walkManager,
-                    new UseSkillPolicy(true, null)
+                    new SkillSelector(Piis.Contains(entity.VNum))
                 ),
                 ct
             );
@@ -145,7 +145,7 @@ public class Bot : IStatefulEntity
         }
     }
 
-    private ILivingEntity? ChooseNextEntity(Map map, Character character, Position characterPosition)
+    private Monster? ChooseNextEntity(Map map, Character character, Position characterPosition)
     {
         var piisCount = map.Entities
             .GetEntities()
@@ -159,6 +159,18 @@ public class Bot : IStatefulEntity
             choosingList = Piis;
         }
 
+        var piiOrPod = GetEntity(choosingList, map, characterPosition);
+
+        if (piiOrPod is null && piisCount != 0)
+        {
+            piiOrPod = GetEntity(Piis, map, characterPosition);
+        }
+
+        return piiOrPod;
+    }
+
+    private Monster? GetEntity(long[] choosingList, Map map, Position characterPosition)
+    {
         return map.Entities.GetEntities()
             .OfType<Monster>()
             .Where(x => x.Hp?.Percentage > 0)
