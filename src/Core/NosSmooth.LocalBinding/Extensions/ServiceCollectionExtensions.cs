@@ -31,12 +31,14 @@ public static class ServiceCollectionExtensions
         return serviceCollection
             .AddSingleton<NosBindingManager>()
             .AddSingleton<NosBrowserManager>()
+            .AddSingleton<NosThreadSynchronizer>()
             .AddSingleton(p => p.GetRequiredService<NosBrowserManager>().PlayerManager)
             .AddSingleton(p => p.GetRequiredService<NosBrowserManager>().SceneManager)
             .AddSingleton(p => p.GetRequiredService<NosBrowserManager>().PetManagerList)
             .AddSingleton(p => p.GetRequiredService<NosBrowserManager>().SceneManager)
             .AddSingleton(p => p.GetRequiredService<NosBrowserManager>().PetManagerList)
             .AddSingleton(p => p.GetRequiredService<NosBindingManager>().PlayerManager)
+            .AddSingleton(p => p.GetRequiredService<NosBindingManager>().Periodic)
             .AddSingleton(p => p.GetRequiredService<NosBindingManager>().PetManager)
             .AddSingleton(p => p.GetRequiredService<NosBindingManager>().UnitManager)
             .AddSingleton(p => p.GetRequiredService<NosBindingManager>().Network);

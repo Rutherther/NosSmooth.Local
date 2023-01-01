@@ -34,6 +34,7 @@ public class HooksConfigBuilder
     private readonly HookOptionsBuilder _entityFocusHook;
     private readonly HookOptionsBuilder _entityFollowHook;
     private readonly HookOptionsBuilder _entityUnfollowHook;
+    private readonly HookOptionsBuilder _periodicHook;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="HooksConfigBuilder"/> class.
@@ -47,6 +48,7 @@ public class HooksConfigBuilder
         _entityFocusHook = new HookOptionsBuilder(new UnitManagerBindingOptions().EntityFocusHook);
         _entityFollowHook = new HookOptionsBuilder(new CharacterBindingOptions().EntityFollowHook);
         _entityUnfollowHook = new HookOptionsBuilder(new CharacterBindingOptions().EntityUnfollowHook);
+        _periodicHook = new HookOptionsBuilder(new PeriodicBindingOptions().PeriodicHook);
     }
 
     /// <summary>
@@ -62,6 +64,7 @@ public class HooksConfigBuilder
         _entityFocusHook.Hook(false);
         _entityFollowHook.Hook(false);
         _entityUnfollowHook.Hook(false);
+        _periodicHook.Hook(false);
         return this;
     }
 
@@ -78,6 +81,7 @@ public class HooksConfigBuilder
         _entityFocusHook.Hook(true);
         _entityFollowHook.Hook(true);
         _entityUnfollowHook.Hook(true);
+        _periodicHook.Hook(true);
         return this;
     }
 
@@ -89,6 +93,28 @@ public class HooksConfigBuilder
     {
         _packetSendHook.Hook(true);
         _packetReceiveHook.Hook(true);
+        return this;
+    }
+
+    /// <summary>
+    /// Configure periodic hook. Can be any periodic function in NosTale called on every frame.
+    /// Enables the hook. In case you just want to change the pattern or offset
+    /// and do not want to enable the hook, call .Hook(false) in the builder.
+    /// </summary>
+    /// <param name="configure">The configuring action.</param>
+    /// <returns>This builder.</returns>
+    public HooksConfigBuilder HookPeriodic(Action<HookOptionsBuilder>? configure = default)
+    {
+        if (configure is not null)
+        {
+            _periodicHook.Hook();
+            configure(_periodicHook);
+        }
+        else
+        {
+            _periodicHook.Hook(true);
+        }
+
         return this;
     }
 

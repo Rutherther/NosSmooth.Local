@@ -30,11 +30,13 @@ public class NosBindingManager : IDisposable
     private readonly CharacterBindingOptions _characterBindingOptions;
     private readonly NetworkBindingOptions _networkBindingOptions;
     private readonly UnitManagerBindingOptions _unitManagerBindingOptions;
+    private readonly PeriodicBindingOptions _periodicBindingOptions;
 
     private NetworkBinding? _networkBinding;
     private PlayerManagerBinding? _characterBinding;
     private UnitManagerBinding? _unitManagerBinding;
     private PetManagerBinding? _petManagerBinding;
+    private PeriodicBinding? _periodicBinding;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NosBindingManager"/> class.
@@ -44,13 +46,15 @@ public class NosBindingManager : IDisposable
     /// <param name="networkBindingOptions">The network binding options.</param>
     /// <param name="sceneManagerBindingOptions">The scene manager binding options.</param>
     /// <param name="petManagerBindingOptions">The pet manager binding options.</param>
+    /// <param name="periodicBindingOptions">The periodic binding options.</param>
     public NosBindingManager
     (
         NosBrowserManager browserManager,
         IOptions<CharacterBindingOptions> characterBindingOptions,
         IOptions<NetworkBindingOptions> networkBindingOptions,
         IOptions<UnitManagerBindingOptions> sceneManagerBindingOptions,
-        IOptions<PetManagerBindingOptions> petManagerBindingOptions
+        IOptions<PetManagerBindingOptions> petManagerBindingOptions,
+        IOptions<PeriodicBindingOptions> periodicBindingOptions
     )
     {
         _browserManager = browserManager;
@@ -61,6 +65,7 @@ public class NosBindingManager : IDisposable
         _networkBindingOptions = networkBindingOptions.Value;
         _unitManagerBindingOptions = sceneManagerBindingOptions.Value;
         _petManagerBindingOptions = petManagerBindingOptions.Value;
+        _periodicBindingOptions = periodicBindingOptions.Value;
     }
 
     /// <summary>
@@ -77,6 +82,26 @@ public class NosBindingManager : IDisposable
     /// Gets the current process memory.
     /// </summary>
     internal IMemory Memory { get; }
+
+    /// <summary>
+    /// Gets the periodic binding.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown if the manager is not initialized yet.</exception>
+    public PeriodicBinding Periodic
+    {
+        get
+        {
+            if (_periodicBinding is null)
+            {
+                throw new InvalidOperationException
+                (
+                    "Could not get periodic. The binding manager is not initialized. Did you forget to call NosBindingManager.Initialize?"
+                );
+            }
+
+            return _periodicBinding;
+        }
+    }
 
     /// <summary>
     /// Gets the network binding.
@@ -179,6 +204,38 @@ public class NosBindingManager : IDisposable
             }
 
             errorResults.Add(browserInitializationResult);
+        }
+
+        try
+        {
+            var periodicBinding = PeriodicBinding.Create
+            (
+                this,
+                _periodicBindingOptions
+            );
+            if (!periodicBinding.IsSuccess)
+            {
+                errorResults.Add
+                (
+                    Result.FromError
+                    (
+                        new CouldNotInitializeModuleError(typeof(PeriodicBinding), periodicBinding.Error),
+                        periodicBinding
+                    )
+                );
+            }
+            _periodicBinding = periodicBinding.Entity;
+        }
+        catch (Exception e)
+        {
+            errorResults.Add
+            (
+                Result.FromError
+                (
+                    new CouldNotInitializeModuleError(typeof(PeriodicBinding), new ExceptionError(e)),
+                    (Result)new ExceptionError(e)
+                )
+            );
         }
 
         try
