@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\src\Core\NosSmooth.LocalBinding\NosSmooth.LocalBinding.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="NosSmooth.Data.NOSFiles" Version="2.0.2" />
+      <PackageReference Include="NosSmooth.PacketSerializer" Version="2.0.0" />
+    </ItemGroup>
+
+</Project>
