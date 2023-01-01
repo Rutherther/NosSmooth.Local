@@ -1,49 +1,97 @@
 ﻿//
-//  CombatCommands.cs
+//  EntityCommands.cs
 //
 //  Copyright (c) František Boháček. All rights reserved.
 //  Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using NosSmooth.ChatCommands;
-using NosSmooth.Core.Client;
-using NosSmooth.LocalBinding;
+using NosSmooth.Extensions.Combat.Errors;
+using NosSmooth.Game;
 using NosSmooth.LocalBinding.Objects;
 using NosSmooth.LocalBinding.Structs;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
 using Remora.Results;
 
-namespace WalkCommands.Commands;
+namespace SimplePiiBot.Commands;
 
 /// <summary>
 /// Represents command group for combat commands.
 /// </summary>
-public class CombatCommands : CommandGroup
+public class EntityCommands : CommandGroup
 {
+    private readonly Game _game;
     private readonly UnitManagerBinding _unitManagerBinding;
     private readonly SceneManager _sceneManager;
     private readonly PlayerManagerBinding _playerManagerBinding;
     private readonly FeedbackService _feedbackService;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="CombatCommands"/> class.
+    /// Initializes a new instance of the <see cref="EntityCommands"/> class.
     /// </summary>
+    /// <param name="game">The game.</param>
     /// <param name="unitManagerBinding">The scene manager binding.</param>
     /// <param name="sceneManager">The scene manager.</param>
     /// <param name="playerManagerBinding">The character binding.</param>
     /// <param name="feedbackService">The feedback service.</param>
-    public CombatCommands
+    public EntityCommands
     (
+        Game game,
         UnitManagerBinding unitManagerBinding,
         SceneManager sceneManager,
         PlayerManagerBinding playerManagerBinding,
         FeedbackService feedbackService
     )
     {
+        _game = game;
         _unitManagerBinding = unitManagerBinding;
         _sceneManager = sceneManager;
         _playerManagerBinding = playerManagerBinding;
         _feedbackService = feedbackService;
+    }
+
+    /// <summary>
+    /// Show close entities.
+    /// </summary>
+    /// <param name="range">The range to look.</param>
+    /// <returns>A task that may or may not have succeeded.</returns>
+    [Command("close")]
+    public async Task<Result> HandleCloseEntitiesAsync(int range = 10)
+    {
+        var map = _game.CurrentMap;
+        var character = _game.Character;
+        if (map is null)
+        {
+            return new MapNotInitializedError();
+        }
+
+        if (character is null)
+        {
+            return new CharacterNotInitializedError();
+        }
+
+        var position = character.Position;
+        if (position is null)
+        {
+            return new CharacterNotInitializedError("Position");
+        }
+
+        var entities = map.Entities
+            .GetEntities()
+            .Where(x => x.Position?.DistanceSquared(position.Value) <= range * range)
+            .ToList();
+
+        if (entities.Count == 0)
+        {
+            await _feedbackService.SendInfoMessageAsync("No entity found.", CancellationToken);
+        }
+
+        foreach (var entity in entities)
+        {
+            await _feedbackService.SendInfoMessageAsync($"Found entity: {entity.Id}", CancellationToken);
+        }
+
+        return Result.FromSuccess();
     }
 
     /// <summary>

@@ -59,7 +59,6 @@ public class Startup
 
         collection.AddCommandTree()
             .WithCommandGroup<DetachCommand>()
-            .WithCommandGroup<CombatCommands>()
             .WithCommandGroup<Commands.WalkCommands>();
         return collection.BuildServiceProvider();
     }

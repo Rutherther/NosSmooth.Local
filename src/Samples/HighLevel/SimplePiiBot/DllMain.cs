@@ -87,7 +87,8 @@ public class DllMain
                         .AddNostaleChatCommands()
                         .AddGameResponder<EntityJoinedResponder>()
                         .AddCommandTree()
-                        .WithCommandGroup<ControlCommands>();
+                        .WithCommandGroup<ControlCommands>()
+                        .WithCommandGroup<EntityCommands>();
                     s.AddHostedService<HostedService>();
                 }
             ).Build();
