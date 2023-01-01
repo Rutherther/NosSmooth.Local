@@ -11,6 +11,7 @@ using NosSmooth.LocalBinding.Options;
 using NosSmooth.LocalBinding.Structs;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.X86;
+using Reloaded.Hooks.Internal.Testing;
 using Remora.Results;
 
 namespace NosSmooth.LocalBinding.Objects;
@@ -56,7 +57,7 @@ public class UnitManagerBinding
             bindingOptions.UnitManagerOffsets
         );
 
-        var entityFocusHookResult = bindingManager.CreateHookFromPattern<FocusEntityDelegate>
+        var entityFocusHookResult = bindingManager.CreateCustomAsmHookFromPattern<FocusEntityDelegate>
             ("UnitManager.EntityFocus", binding.FocusEntityDetour, bindingOptions.EntityFocusHook);
         if (!entityFocusHookResult.IsDefined(out var entityFocusHook))
         {
@@ -72,7 +73,9 @@ public class UnitManagerBinding
 
     private readonly NosBindingManager _bindingManager;
 
-    private IHook<FocusEntityDelegate> _focusHook = null!;
+    private NosAsmHook<FocusEntityDelegate> _focusHook = null!;
+
+    private bool _callingFocus;
 
     private UnitManagerBinding
     (
@@ -113,7 +116,7 @@ public class UnitManagerBinding
     /// </summary>
     public void DisableHooks()
     {
-        _focusHook.Disable();
+        _focusHook.Hook.Disable();
     }
 
     /// <summary>
@@ -121,7 +124,7 @@ public class UnitManagerBinding
     /// </summary>
     public void EnableHooks()
     {
-        _focusHook.EnableOrActivate();
+        _focusHook.Hook.EnableOrActivate();
     }
 
     /// <summary>
@@ -133,7 +136,9 @@ public class UnitManagerBinding
     {
         try
         {
-            _focusHook.OriginalFunction(Address, entityAddress);
+            _callingFocus = true;
+            _focusHook.OriginalFunction.GetWrapper()(Address, entityAddress);
+            _callingFocus = false;
         }
         catch (Exception e)
         {
@@ -145,19 +150,19 @@ public class UnitManagerBinding
 
     private nuint FocusEntityDetour(nuint unitManagerPtr, nuint entityId)
     {
+        if (_callingFocus)
+        {
+            // in case this is being called from UnitManagerBinding.FocusEntity,
+            // do not handle.
+            return 1;
+        }
+
         MapBaseObj? obj = null;
         if (entityId != nuint.Zero)
         {
             obj = new MapBaseObj(_bindingManager.Memory, entityId);
         }
 
-        var result = EntityFocus?.Invoke(obj);
-
-        if (result ?? true)
-        {
-            return _focusHook.OriginalFunction(unitManagerPtr, entityId);
-        }
-
-        return 0;
+        return (EntityFocus?.Invoke(obj) ?? true) ? (nuint)1 : 0;
     }
 }
