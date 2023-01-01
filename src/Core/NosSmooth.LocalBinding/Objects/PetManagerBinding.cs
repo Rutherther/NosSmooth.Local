@@ -90,6 +90,22 @@ public class PetManagerBinding
     public PetManagerList PetManagerList { get; }
 
     /// <summary>
+    /// Disable all PetManager hooks.
+    /// </summary>
+    public void DisableHooks()
+    {
+        _petWalkHook.Disable();
+    }
+
+    /// <summary>
+    /// Enable all PetManager hooks.
+    /// </summary>
+    public void EnableHooks()
+    {
+        _petWalkHook.Enable();
+    }
+
+    /// <summary>
     /// Walk the given pet to the given location.
     /// </summary>
     /// <param name="selector">Index of the pet to walk. -1 for every pet currently available.</param>

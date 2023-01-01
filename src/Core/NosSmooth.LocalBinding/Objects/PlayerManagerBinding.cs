@@ -132,13 +132,23 @@ public class PlayerManagerBinding
     public event Func<MapBaseObj?, bool>? FollowEntityCall;
 
     /// <summary>
-    /// Disable all the hooks that are currently enabled.
+    /// Disable all PlayerManager hooks.
     /// </summary>
-    /// <returns>A result that may or may not have succeeded.</returns>
-    public Result DisableHooks()
+    public void DisableHooks()
     {
-        _walkHook?.Disable();
-        return Result.FromSuccess();
+        _followHook.Disable();
+        _unfollowHook.Disable();
+        _walkHook.Disable();
+    }
+
+    /// <summary>
+    /// Enable all PlayerManager hooks.
+    /// </summary>
+    public void EnableHooks()
+    {
+        _followHook.Enable();
+        _unfollowHook.Enable();
+        _walkHook.Enable();
     }
 
     /// <summary>

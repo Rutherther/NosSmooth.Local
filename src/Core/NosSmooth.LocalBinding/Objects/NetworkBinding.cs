@@ -149,14 +149,21 @@ public class NetworkBinding
     }
 
     /// <summary>
+    /// Enable all networking hooks.
+    /// </summary>
+    public void EnableHooks()
+    {
+        _receiveHook.Enable();
+        _sendHook.Enable();
+    }
+
+    /// <summary>
     /// Disable all the hooks that are currently enabled.
     /// </summary>
-    /// <returns>A result that may or may not have succeeded.</returns>
-    public Result DisableHooks()
+    public void DisableHooks()
     {
-        _receiveHook?.Disable();
-        _sendHook?.Disable();
-        return Result.FromSuccess();
+        _receiveHook.Disable();
+        _sendHook.Disable();
     }
 
     private nuint GetManagerAddress(bool third)

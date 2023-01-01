@@ -26,7 +26,7 @@ public class NosBindingManager : IDisposable
     private readonly PetManagerBindingOptions _petManagerBindingOptions;
     private readonly CharacterBindingOptions _characterBindingOptions;
     private readonly NetworkBindingOptions _networkBindingOptions;
-    private UnitManagerBindingOptions _unitManagerBindingOptions;
+    private readonly UnitManagerBindingOptions _unitManagerBindingOptions;
 
     private NetworkBinding? _networkBinding;
     private PlayerManagerBinding? _characterBinding;
@@ -309,19 +309,23 @@ public class NosBindingManager : IDisposable
     /// <summary>
     /// Disable the currently enabled NosTale hooks.
     /// </summary>
-    /// <returns>A result that may or may not have succeeded.</returns>
-    public Result DisableHooks()
+    public void DisableHooks()
     {
-        if (_networkBinding is not null)
-        {
-            var result = _networkBinding.DisableHooks();
-            if (!result.IsSuccess)
-            {
-                return result;
-            }
-        }
+        _networkBinding?.DisableHooks();
+        _characterBinding?.DisableHooks();
+        _unitManagerBinding?.DisableHooks();
+        _petManagerBinding?.DisableHooks();
+    }
 
-        return Result.FromSuccess();
+    /// <summary>
+    /// Enable all NosTale hooks.
+    /// </summary>
+    public void EnableHooks()
+    {
+        _networkBinding?.EnableHooks();
+        _characterBinding?.EnableHooks();
+        _unitManagerBinding?.EnableHooks();
+        _petManagerBinding?.EnableHooks();
     }
 
     /// <inheritdoc />
