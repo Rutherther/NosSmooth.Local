@@ -44,6 +44,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\NosSmooth.Extensions.SharedBinding\NosSmooth.Extensions.SharedBinding.csproj" />
     <ProjectReference Include="..\..\..\Core\NosSmooth.LocalClient\NosSmooth.LocalClient.csproj" />
     <ProjectReference Include="..\..\..\Extensions\NosSmooth.ChatCommands\NosSmooth.ChatCommands.csproj" />
   </ItemGroup>

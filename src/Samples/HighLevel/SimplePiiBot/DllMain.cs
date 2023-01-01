@@ -13,6 +13,7 @@ using NosSmooth.Core.Extensions;
 using NosSmooth.Data.NOSFiles.Extensions;
 using NosSmooth.Extensions.Combat.Extensions;
 using NosSmooth.Extensions.Pathfinding.Extensions;
+using NosSmooth.Extensions.SharedBinding.Extensions;
 using NosSmooth.Game.Extensions;
 using NosSmooth.LocalClient.Extensions;
 using Remora.Commands.Extensions;
@@ -80,7 +81,9 @@ public class DllMain
                     s.AddNostaleCore()
                         .AddNostaleGame()
                         .AddLocalClient()
+                        .ShareNosSmooth()
                         .AddNostaleDataFiles()
+                        .ShareNosSmooth()
                         .AddNostaleCombat()
                         .AddNostalePathfinding()
                         .AddSingleton<Bot>()
