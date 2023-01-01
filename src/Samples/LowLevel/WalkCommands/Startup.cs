@@ -16,8 +16,8 @@ using NosSmooth.LocalBinding;
 using NosSmooth.LocalBinding.Extensions;
 using NosSmooth.LocalClient;
 using NosSmooth.LocalClient.Extensions;
-using NosSmooth.Packets.Extensions;
-using NosSmooth.Packets.Packets;
+using NosSmooth.PacketSerializer.Extensions;
+using NosSmooth.PacketSerializer.Packets;
 using Remora.Commands.Extensions;
 using WalkCommands.Commands;
 

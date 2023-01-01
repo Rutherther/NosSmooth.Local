@@ -11,8 +11,8 @@ using NosSmooth.Core.Client;
 using NosSmooth.Core.Extensions;
 using NosSmooth.Data.NOSFiles;
 using NosSmooth.LocalBinding;
-using NosSmooth.Packets.Extensions;
-using NosSmooth.Packets.Packets;
+using NosSmooth.PacketSerializer.Extensions;
+using NosSmooth.PacketSerializer.Packets;
 using OneOf.Types;
 using Remora.Results;
 

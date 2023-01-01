@@ -12,9 +12,9 @@ using NosSmooth.LocalBinding;
 using NosSmooth.LocalClient.Extensions;
 using NosSmooth.Packets.Enums;
 using NosSmooth.Packets.Enums.Chat;
-using NosSmooth.Packets.Extensions;
-using NosSmooth.Packets.Packets;
 using NosSmooth.Packets.Server.Chat;
+using NosSmooth.PacketSerializer.Extensions;
+using NosSmooth.PacketSerializer.Packets;
 
 namespace SimpleChat;
 
