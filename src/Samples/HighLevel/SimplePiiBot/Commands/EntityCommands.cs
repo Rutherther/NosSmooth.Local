@@ -7,9 +7,11 @@
 using NosSmooth.ChatCommands;
 using NosSmooth.Extensions.Combat.Errors;
 using NosSmooth.Game;
+using NosSmooth.Game.Apis;
 using NosSmooth.LocalBinding;
 using NosSmooth.LocalBinding.Objects;
 using NosSmooth.LocalBinding.Structs;
+using NosSmooth.Packets.Enums.Chat;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
 using Remora.Results;
@@ -93,7 +95,7 @@ public class EntityCommands : CommandGroup
 
         foreach (var entity in entities)
         {
-            await _feedbackService.SendInfoMessageAsync($"Found entity: {entity.Id}", CancellationToken);
+            await _feedbackService.SendMessageAsync($"Found entity: {entity.Id}", SayColor.Yellow, CancellationToken);
         }
 
         return Result.FromSuccess();
