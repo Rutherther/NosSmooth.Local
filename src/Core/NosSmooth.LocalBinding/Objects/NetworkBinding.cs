@@ -4,6 +4,7 @@
 //  Copyright (c) František Boháček. All rights reserved.
 //  Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using NosSmooth.LocalBinding.Errors;
@@ -27,7 +28,7 @@ public class NetworkBinding
         FunctionAttribute.StackCleanup.Callee,
         new[] { FunctionAttribute.Register.ebx, FunctionAttribute.Register.esi, FunctionAttribute.Register.edi, FunctionAttribute.Register.ebp }
     )]
-    private delegate void PacketSendDelegate(nuint packetObject, nuint packetString);
+    private delegate nuint PacketSendDelegate(nuint packetObject, nuint packetString);
 
     [Function
     (
@@ -36,7 +37,7 @@ public class NetworkBinding
         FunctionAttribute.StackCleanup.Callee,
         new[] { FunctionAttribute.Register.ebx, FunctionAttribute.Register.esi, FunctionAttribute.Register.edi, FunctionAttribute.Register.ebp }
     )]
-    private delegate void PacketReceiveDelegate(nuint packetObject, nuint packetString);
+    private delegate nuint PacketReceiveDelegate(nuint packetObject, nuint packetString);
 
     /// <summary>
     /// Create the network binding with finding the network object and functions.
@@ -59,14 +60,14 @@ public class NetworkBinding
             (nuint)(networkObjectAddress.Offset + (int)process.MainModule!.BaseAddress + 0x01)
         );
 
-        var sendHookResult = bindingManager.CreateHookFromPattern<PacketSendDelegate>
+        var sendHookResult = bindingManager.CreateCustomAsmHookFromPattern<PacketSendDelegate>
             ("NetworkBinding.SendPacket", binding.SendPacketDetour, options.PacketSendHook);
         if (!sendHookResult.IsDefined(out var sendHook))
         {
             return Result<NetworkBinding>.FromError(sendHookResult);
         }
 
-        var receiveHookResult = bindingManager.CreateHookFromPattern<PacketReceiveDelegate>
+        var receiveHookResult = bindingManager.CreateCustomAsmHookFromPattern<PacketReceiveDelegate>
             ("NetworkBinding.ReceivePacket", binding.ReceivePacketDetour, options.PacketReceiveHook);
         if (!receiveHookResult.IsDefined(out var receiveHook))
         {
@@ -80,8 +81,10 @@ public class NetworkBinding
 
     private readonly NosBindingManager _bindingManager;
     private readonly nuint _networkManagerAddress;
-    private IHook<PacketSendDelegate> _sendHook = null!;
-    private IHook<PacketReceiveDelegate> _receiveHook = null!;
+    private NosAsmHook<PacketSendDelegate> _sendHook = null!;
+    private NosAsmHook<PacketReceiveDelegate> _receiveHook = null!;
+    private bool _callingReceive;
+    private bool _callingSend;
 
     private NetworkBinding
     (
@@ -118,8 +121,10 @@ public class NetworkBinding
     {
         try
         {
+            _callingSend = true;
             using var nostaleString = NostaleStringA.Create(_bindingManager.Memory, packet);
-            _sendHook.OriginalFunction(GetManagerAddress(false), nostaleString.Get());
+            _sendHook.OriginalFunction.GetWrapper()(GetManagerAddress(false), nostaleString.Get());
+            _callingSend = false;
         }
         catch (Exception e)
         {
@@ -138,8 +143,10 @@ public class NetworkBinding
     {
         try
         {
+            _callingReceive = true;
             using var nostaleString = NostaleStringA.Create(_bindingManager.Memory, packet);
-            _receiveHook.OriginalFunction(GetManagerAddress(true), nostaleString.Get());
+            _receiveHook.OriginalFunction.GetWrapper()(GetManagerAddress(true), nostaleString.Get());
+            _callingReceive = false;
         }
         catch (Exception e)
         {
@@ -154,8 +161,8 @@ public class NetworkBinding
     /// </summary>
     public void EnableHooks()
     {
-        _receiveHook.EnableOrActivate();
-        _sendHook.EnableOrActivate();
+        _receiveHook.Hook.EnableOrActivate();
+        _sendHook.Hook.EnableOrActivate();
     }
 
     /// <summary>
@@ -163,8 +170,8 @@ public class NetworkBinding
     /// </summary>
     public void DisableHooks()
     {
-        _receiveHook.Disable();
-        _sendHook.Disable();
+        _receiveHook.Hook.Disable();
+        _sendHook.Hook.Disable();
     }
 
     private nuint GetManagerAddress(bool third)
@@ -182,51 +189,36 @@ public class NetworkBinding
         return networkManager;
     }
 
-    private void SendPacketDetour(nuint packetObject, nuint packetString)
+    private nuint SendPacketDetour(nuint packetObject, nuint packetString)
     {
+        if (_callingSend)
+        {
+            return 1;
+        }
+
         var packet = Marshal.PtrToStringAnsi((IntPtr)packetString);
         if (packet is null)
         { // ?
-            _sendHook.OriginalFunction(packetObject, packetString);
+            return 1;
         }
-        else
-        {
-            var result = PacketSend?.Invoke(packet);
-            if (result ?? true)
-            {
-                _sendHook.OriginalFunction(packetObject, packetString);
-            }
-        }
+        var result = PacketSend?.Invoke(packet);
+        return result ?? true ? (nuint)1 : 0;
     }
 
-    private bool _receivedCancel = false;
-
-    private void ReceivePacketDetour(nuint packetObject, nuint packetString)
+    private nuint ReceivePacketDetour(nuint packetObject, nuint packetString)
     {
+        if (_callingReceive)
+        {
+            return 1;
+        }
+
         var packet = Marshal.PtrToStringAnsi((IntPtr)packetString);
         if (packet is null)
         { // ?
-            _receiveHook.OriginalFunction(packetObject, packetString);
+            return 1;
         }
-        else
-        {
-            var result = PacketReceive?.Invoke(packet);
-            if (result ?? true)
-            {
-                // This is a TEMPORARY fix, I don't know why,
-                // but upon logging in (for OpenNos servers)
-                // there is an exception when receiving packet
-                // cancel.
-                // TODO FIX THIS correctly
-                if (_receivedCancel || !packet.StartsWith("cancel"))
-                {
-                    _receiveHook.OriginalFunction(packetObject, packetString);
-                }
-                else
-                {
-                    _receivedCancel = true;
-                }
-            }
-        }
+
+        var result = PacketReceive?.Invoke(packet);
+        return result ?? true ? (nuint)1 : 0;
     }
 }
