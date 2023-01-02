@@ -121,6 +121,16 @@ public interface IHookManager
     public void Enable(IEnumerable<string> names);
 
     /// <summary>
+    /// Disable hooks from the given list.
+    /// </summary>
+    /// <remarks>
+    /// Use constants from <see cref="IHookManager"/>,
+    /// such as IHookManager.PacketSendName.
+    /// </remarks>
+    /// <param name="names">The hooks to disable.</param>
+    public void Disable(IEnumerable<string> names);
+
+    /// <summary>
     /// Disable all hooks.
     /// </summary>
     public void DisableAll();
