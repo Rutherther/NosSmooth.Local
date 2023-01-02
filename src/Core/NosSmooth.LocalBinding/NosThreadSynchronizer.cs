@@ -5,10 +5,9 @@
 //  Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Concurrent;
-using System.Net;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NosSmooth.LocalBinding.Objects;
+using NosSmooth.LocalBinding.Hooks;
 using NosSmooth.LocalBinding.Options;
 using Remora.Results;
 
@@ -19,18 +18,26 @@ namespace NosSmooth.LocalBinding;
 /// </summary>
 public class NosThreadSynchronizer
 {
-    private readonly PeriodicBinding _periodicBinding;
+    private readonly IPeriodicHook _periodicHook;
+    private readonly ILogger<NosThreadSynchronizer> _logger;
     private readonly NosThreadSynchronizerOptions _options;
     private readonly ConcurrentQueue<SyncOperation> _queuedOperations;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NosThreadSynchronizer"/> class.
     /// </summary>
-    /// <param name="periodicBinding">The periodic function binding.</param>
+    /// <param name="periodicHook">The periodic hook.</param>
+    /// <param name="logger">The logger.</param>
     /// <param name="options">The options.</param>
-    public NosThreadSynchronizer(PeriodicBinding periodicBinding, IOptions<NosThreadSynchronizerOptions> options)
+    public NosThreadSynchronizer
+    (
+        IPeriodicHook periodicHook,
+        ILogger<NosThreadSynchronizer> logger,
+        IOptions<NosThreadSynchronizerOptions> options
+    )
     {
-        _periodicBinding = periodicBinding;
+        _periodicHook = periodicHook;
+        _logger = logger;
         _options = options.Value;
         _queuedOperations = new ConcurrentQueue<SyncOperation>();
     }
@@ -40,7 +47,7 @@ public class NosThreadSynchronizer
     /// </summary>
     public void StartSynchronizer()
     {
-        _periodicBinding.PeriodicCall += PeriodicCall;
+        _periodicHook.Called += PeriodicCall;
     }
 
     /// <summary>
@@ -48,7 +55,7 @@ public class NosThreadSynchronizer
     /// </summary>
     public void StopSynchronizer()
     {
-        _periodicBinding.PeriodicCall -= PeriodicCall;
+        _periodicHook.Called -= PeriodicCall;
     }
 
     private void PeriodicCall(object? owner, System.EventArgs eventArgs)
@@ -65,13 +72,13 @@ public class NosThreadSynchronizer
     {
         try
         {
-            var result = operation.action();
+            var result = operation.Action();
             operation.Result = result;
         }
         catch (Exception e)
         {
-            // TODO: log?
-            operation.Result = e;
+            _logger.LogError(e, "Synchronizer obtained an exception");
+            operation.Result = (Result)e;
         }
 
         if (operation.CancellationTokenSource is not null)
@@ -115,6 +122,23 @@ public class NosThreadSynchronizer
     /// <returns>The result of the action.</returns>
     public async Task<Result> SynchronizeAsync(Func<Result> action, CancellationToken ct = default)
     {
+        return (Result)await CommonSynchronizeAsync(() => action(), ct);
+    }
+
+    /// <summary>
+    /// Synchronizes to NosTale thread, executes the given action and returns its result.
+    /// </summary>
+    /// <param name="action">The action to execute.</param>
+    /// <param name="ct">The cancellation token used for cancelling the operation.</param>
+    /// <returns>The result of the action.</returns>
+    /// <typeparam name="T">The type of the result.</typeparam>
+    public async Task<Result<T>> SynchronizeAsync<T>(Func<Result<T>> action, CancellationToken ct = default)
+    {
+        return (Result<T>)await CommonSynchronizeAsync(() => action(), ct);
+    }
+
+    private async Task<IResult> CommonSynchronizeAsync(Func<IResult> action, CancellationToken ct = default)
+    {
         var linkedSource = CancellationTokenSource.CreateLinkedTokenSource(ct);
         var syncOperation = new SyncOperation(action, linkedSource);
         _queuedOperations.Enqueue(syncOperation);
@@ -132,14 +156,14 @@ public class NosThreadSynchronizer
         }
         catch (Exception e)
         {
-            return new ExceptionError(e);
+            return (Result)new ExceptionError(e);
         }
 
         return syncOperation.Result ?? Result.FromSuccess();
     }
 
-    private record SyncOperation(Func<Result> action, CancellationTokenSource? CancellationTokenSource)
+    private record SyncOperation(Func<IResult> Action, CancellationTokenSource? CancellationTokenSource)
     {
-        public Result? Result { get; set; }
+        public IResult? Result { get; set; }
     }
 }

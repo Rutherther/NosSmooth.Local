@@ -8,6 +8,7 @@ using System.Diagnostics;
 using NosSmooth.Core.Extensions;
 using NosSmooth.LocalBinding;
 using NosSmooth.LocalBinding.Options;
+using NosSmooth.LocalBinding.Structs;
 
 namespace ExternalBrowser;
 
@@ -25,6 +26,8 @@ public class Program
         var playerManagerOptions = new PlayerManagerOptions();
         var sceneManagerOptions = new SceneManagerOptions();
         var petManagerOptions = new PetManagerOptions();
+        var networkManagerOptions = new NetworkManagerOptions();
+        var unitManagerOptions = new UnitManagerOptions();
 
         foreach (var argument in arguments)
         {
@@ -45,7 +48,14 @@ public class Program
             foreach (var process in processes)
             {
                 var externalBrowser = new NosBrowserManager
-                    (process, playerManagerOptions, sceneManagerOptions, petManagerOptions);
+                (
+                    process,
+                    playerManagerOptions,
+                    sceneManagerOptions,
+                    petManagerOptions,
+                    networkManagerOptions,
+                    unitManagerOptions
+                );
 
                 if (!externalBrowser.IsNostaleProcess)
                 {
@@ -68,7 +78,8 @@ public class Program
                     continue;
                 }
 
-                Console.WriteLine($"Player in process {process.Id} is named {externalBrowser.PlayerManager.Player.Name}");
+                Console.WriteLine
+                    ($"Player in process {process.Id} is named {externalBrowser.PlayerManager.Player.Name}");
             }
         }
     }

@@ -5,6 +5,8 @@
 //  Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.ObjectiveC;
 using Reloaded.Memory.Pointers;
 using Reloaded.Memory.Sources;
 
@@ -14,8 +16,8 @@ namespace NosSmooth.LocalBinding.Structs;
 /// A class representing a list from nostale.
 /// </summary>
 /// <typeparam name="T">The type.</typeparam>
-public class NostaleList<T> : IEnumerable<T>
-    where T : NostaleObject, new()
+public abstract class NostaleList<T> : IEnumerable<T>
+    where T : NostaleObject
 {
     private readonly IMemory _memory;
 
@@ -52,11 +54,7 @@ public class NostaleList<T> : IEnumerable<T>
             _memory.SafeRead(Address + 0x04, out int arrayAddress);
             _memory.SafeRead((nuint)arrayAddress + (nuint)(0x04 * index), out int objectAddress);
 
-            return new T
-            {
-                Memory = _memory,
-                Address = (nuint)objectAddress
-            };
+            return CreateNew(_memory, (nuint)objectAddress);
         }
     }
 
@@ -71,6 +69,14 @@ public class NostaleList<T> : IEnumerable<T>
             return length;
         }
     }
+
+    /// <summary>
+    /// Create a new instance of <see cref="T"/> with the given memory and address.
+    /// </summary>
+    /// <param name="memory">The memory.</param>
+    /// <param name="address">The address.</param>
+    /// <returns>The new object.</returns>
+    protected abstract T CreateNew(IMemory memory, nuint address);
 
     /// <inheritdoc/>
     public IEnumerator<T> GetEnumerator()

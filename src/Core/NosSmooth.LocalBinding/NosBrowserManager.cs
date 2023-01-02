@@ -56,9 +56,13 @@ public class NosBrowserManager
     private readonly PlayerManagerOptions _playerManagerOptions;
     private readonly SceneManagerOptions _sceneManagerOptions;
     private readonly PetManagerOptions _petManagerOptions;
+    private readonly NetworkManagerOptions _networkManagerOptions;
+    private readonly UnitManagerOptions _unitManagerOptions;
     private PlayerManager? _playerManager;
     private SceneManager? _sceneManager;
     private PetManagerList? _petManagerList;
+    private NetworkManager? _networkManager;
+    private UnitManager? _unitManager;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NosBrowserManager"/> class.
@@ -66,18 +70,24 @@ public class NosBrowserManager
     /// <param name="playerManagerOptions">The options for obtaining player manager.</param>
     /// <param name="sceneManagerOptions">The scene manager options.</param>
     /// <param name="petManagerOptions">The pet manager options.</param>
+    /// <param name="networkManagerOptions">The network manager options.</param>
+    /// <param name="unitManagerOptions">The unit manager options.</param>
     public NosBrowserManager
     (
         IOptions<PlayerManagerOptions> playerManagerOptions,
         IOptions<SceneManagerOptions> sceneManagerOptions,
-        IOptions<PetManagerOptions> petManagerOptions
+        IOptions<PetManagerOptions> petManagerOptions,
+        IOptions<NetworkManagerOptions> networkManagerOptions,
+        IOptions<UnitManagerOptions> unitManagerOptions
     )
         : this
         (
             Process.GetCurrentProcess(),
             playerManagerOptions.Value,
             sceneManagerOptions.Value,
-            petManagerOptions.Value
+            petManagerOptions.Value,
+            networkManagerOptions.Value,
+            unitManagerOptions.Value
         )
     {
     }
@@ -89,19 +99,25 @@ public class NosBrowserManager
     /// <param name="playerManagerOptions">The options for obtaining player manager.</param>
     /// <param name="sceneManagerOptions">The scene manager options.</param>
     /// <param name="petManagerOptions">The pet manager options.</param>
+    /// <param name="networkManagerOptions">The network manager options.</param>
+    /// <param name="unitManagerOptions">The unit manager options.</param>
     public NosBrowserManager
     (
         Process process,
         PlayerManagerOptions playerManagerOptions,
         SceneManagerOptions sceneManagerOptions,
-        PetManagerOptions petManagerOptions
+        PetManagerOptions petManagerOptions,
+        NetworkManagerOptions networkManagerOptions,
+        UnitManagerOptions unitManagerOptions
     )
     {
         _playerManagerOptions = playerManagerOptions;
         _sceneManagerOptions = sceneManagerOptions;
         _petManagerOptions = petManagerOptions;
+        _networkManagerOptions = networkManagerOptions;
+        _unitManagerOptions = unitManagerOptions;
         Process = process;
-        Memory = new ExternalMemory(process);
+        Memory = Process.Id == Process.GetCurrentProcess().Id ? new Memory() : new ExternalMemory(process);
         Scanner = new Scanner(process, process.MainModule);
     }
 
@@ -124,6 +140,46 @@ public class NosBrowserManager
     /// Gets whether this is a NosTale process or not.
     /// </summary>
     public bool IsNostaleProcess => NosBrowserManager.IsProcessNostaleProcess(Process);
+
+    /// <summary>
+    /// Gets the network manager.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown if the browser is not initialized or there was an error with initialization of network manager.</exception>
+    public NetworkManager NetworkManager
+    {
+        get
+        {
+            if (_networkManager is null)
+            {
+                throw new InvalidOperationException
+                (
+                    "Could not get network manager. The browser manager is not initialized. Did you forget to call NosBrowserManager.Initialize?"
+                );
+            }
+
+            return _networkManager;
+        }
+    }
+
+    /// <summary>
+    /// Gets the network manager.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown if the browser is not initialized or there was an error with initialization of unit manager.</exception>
+    public UnitManager UnitManager
+    {
+        get
+        {
+            if (_unitManager is null)
+            {
+                throw new InvalidOperationException
+                (
+                    "Could not get unit manager. The browser manager is not initialized. Did you forget to call NosBrowserManager.Initialize?"
+                );
+            }
+
+            return _unitManager;
+        }
+    }
 
     /// <summary>
     /// Gets whether the player is currently in game.
@@ -215,6 +271,42 @@ public class NosBrowserManager
         }
 
         List<IResult> errorResults = new List<IResult>();
+        if (_unitManager is null)
+        {
+            var unitManagerResult = UnitManager.Create(this, _unitManagerOptions);
+            if (!unitManagerResult.IsSuccess)
+            {
+                errorResults.Add
+                (
+                    Result.FromError
+                    (
+                        new CouldNotInitializeModuleError(typeof(UnitManager), unitManagerResult.Error),
+                        unitManagerResult
+                    )
+                );
+            }
+
+            _unitManager = unitManagerResult.Entity;
+        }
+
+        if (_networkManager is null)
+        {
+            var networkManagerResult = NetworkManager.Create(this, _networkManagerOptions);
+            if (!networkManagerResult.IsSuccess)
+            {
+                errorResults.Add
+                (
+                    Result.FromError
+                    (
+                        new CouldNotInitializeModuleError(typeof(NetworkManager), networkManagerResult.Error),
+                        networkManagerResult
+                    )
+                );
+            }
+
+            _networkManager = networkManagerResult.Entity;
+        }
+
         if (_playerManager is null)
         {
             var playerManagerResult = PlayerManager.Create(this, _playerManagerOptions);

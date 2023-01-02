@@ -50,4 +50,10 @@ public class PetManagerList : NostaleList<PetManager>
         : base(memory, memory.FollowStaticAddressOffsets(staticPetManagerListAddress, staticPetManagerOffsets))
     {
     }
+
+    /// <inheritdoc />
+    protected override PetManager CreateNew(IMemory memory, nuint address)
+    {
+        return new PetManager(memory, address);
+    }
 }

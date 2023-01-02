@@ -16,13 +16,6 @@ public abstract class NostaleObject
     /// <summary>
     /// Initializes a new instance of the <see cref="NostaleObject"/> class.
     /// </summary>
-    internal NostaleObject()
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="NostaleObject"/> class.
-    /// </summary>
     /// <param name="memory">The memory.</param>
     /// <param name="address">The address in the memory.</param>
     protected NostaleObject(IMemory memory, nuint address)

@@ -6,7 +6,7 @@
 
 using Reloaded.Hooks.Definitions;
 
-namespace NosSmooth.LocalBinding;
+namespace NosSmooth.LocalBinding.Hooks.Implementations;
 
 /// <summary>
 /// An assembly hook data.
