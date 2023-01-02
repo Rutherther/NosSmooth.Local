@@ -59,14 +59,14 @@ internal class HookManager : IHookManager
     {
         return HandleResults
         (
-            PeriodicHook.Create(bindingManager, _options.PeriodicHook).Map(MapHook),
-            EntityFocusHook.Create(bindingManager, browserManager, _options.EntityFocusHook).Map(MapHook),
-            EntityFollowHook.Create(bindingManager, browserManager, _options.EntityFollowHook).Map(MapHook),
-            EntityUnfollowHook.Create(bindingManager, browserManager, _options.EntityUnfollowHook).Map(MapHook),
-            PlayerWalkHook.Create(bindingManager, browserManager, _options.PlayerWalkHook).Map(MapHook),
-            PetWalkHook.Create(bindingManager, _options.PetWalkHook).Map(MapHook),
-            PacketSendHook.Create(bindingManager, browserManager, _options.PacketSendHook).Map(MapHook),
-            PacketReceiveHook.Create(bindingManager, browserManager, _options.PacketReceiveHook).Map(MapHook)
+            () => PeriodicHook.Create(bindingManager, _options.PeriodicHook).Map(MapHook),
+            () => EntityFocusHook.Create(bindingManager, browserManager, _options.EntityFocusHook).Map(MapHook),
+            () => EntityFollowHook.Create(bindingManager, browserManager, _options.EntityFollowHook).Map(MapHook),
+            () => EntityUnfollowHook.Create(bindingManager, browserManager, _options.EntityUnfollowHook).Map(MapHook),
+            () => PlayerWalkHook.Create(bindingManager, browserManager, _options.PlayerWalkHook).Map(MapHook),
+            () => PetWalkHook.Create(bindingManager, _options.PetWalkHook).Map(MapHook),
+            () => PacketSendHook.Create(bindingManager, browserManager, _options.PacketSendHook).Map(MapHook),
+            () => PacketReceiveHook.Create(bindingManager, browserManager, _options.PacketReceiveHook).Map(MapHook)
         );
     }
 
@@ -76,19 +76,28 @@ internal class HookManager : IHookManager
         return original;
     }
 
-    private IResult HandleResults(params Result<INostaleHook>[] results)
+    private IResult HandleResults(params Func<Result<INostaleHook>>[] functions)
     {
         List<IResult> errorResults = new List<IResult>();
-        foreach (var result in results)
+        foreach (var func in functions)
         {
-            if (result.IsSuccess)
+            try
             {
-                _hooks.Add(result.Entity);
+                var result = func();
+                if (result.IsSuccess)
+                {
+                    _hooks.Add(result.Entity);
+                }
+                else
+                {
+                    errorResults.Add(result);
+                }
             }
-            else
+            catch (Exception e)
             {
-                errorResults.Add(result);
+                errorResults.Add((Result)e);
             }
+
         }
 
         return errorResults.Count switch
@@ -106,6 +115,16 @@ internal class HookManager : IHookManager
             .Where(x => names.Contains(x.Name)))
         {
             hook.Enable();
+        }
+    }
+
+    /// <inheritdoc/>
+    public void Disable(IEnumerable<string> names)
+    {
+        foreach (var hook in Hooks
+            .Where(x => names.Contains(x.Name)))
+        {
+            hook.Disable();
         }
     }
 
