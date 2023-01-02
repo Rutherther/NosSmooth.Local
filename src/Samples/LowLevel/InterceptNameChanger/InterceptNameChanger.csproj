@@ -19,10 +19,11 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
     <PackageReference Include="NosSmooth.Core" Version="3.0.1" />
+    <PackageReference Include="NosSmooth.Packets" Version="2.3.4" />
     <PackageReference Include="Remora.Results" Version="7.2.3" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\NosSmooth.Extensions.SharedBinding\NosSmooth.Extensions.SharedBinding.csproj" />
     <ProjectReference Include="..\..\..\Core\NosSmooth.LocalClient\NosSmooth.LocalClient.csproj" />
+    <ProjectReference Include="..\..\..\Extensions\NosSmooth.Extensions.SharedBinding\NosSmooth.Extensions.SharedBinding.csproj" />
   </ItemGroup>
 </Project>

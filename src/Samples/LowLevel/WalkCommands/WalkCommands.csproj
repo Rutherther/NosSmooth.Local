@@ -39,13 +39,16 @@
     <PackageReference Include="NosSmooth.Extensions.Pathfinding">
       <Version>1.1.1</Version>
     </PackageReference>
+    <PackageReference Include="NosSmooth.Packets">
+      <Version>2.3.4</Version>
+    </PackageReference>
     <PackageReference Include="Remora.Results">
       <Version>7.2.3</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\NosSmooth.Extensions.SharedBinding\NosSmooth.Extensions.SharedBinding.csproj" />
     <ProjectReference Include="..\..\..\Core\NosSmooth.LocalClient\NosSmooth.LocalClient.csproj" />
     <ProjectReference Include="..\..\..\Extensions\NosSmooth.ChatCommands\NosSmooth.ChatCommands.csproj" />
+    <ProjectReference Include="..\..\..\Extensions\NosSmooth.Extensions.SharedBinding\NosSmooth.Extensions.SharedBinding.csproj" />
   </ItemGroup>
 </Project>
