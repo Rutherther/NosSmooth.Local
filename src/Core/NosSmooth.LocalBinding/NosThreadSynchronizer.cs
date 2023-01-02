@@ -40,7 +40,7 @@ public class NosThreadSynchronizer
     /// </summary>
     public void StartSynchronizer()
     {
-        _periodicBinding.Periodic += Periodic;
+        _periodicBinding.PeriodicCall += PeriodicCall;
     }
 
     /// <summary>
@@ -48,10 +48,10 @@ public class NosThreadSynchronizer
     /// </summary>
     public void StopSynchronizer()
     {
-        _periodicBinding.Periodic -= Periodic;
+        _periodicBinding.PeriodicCall -= PeriodicCall;
     }
 
-    private void Periodic()
+    private void PeriodicCall(object? owner, System.EventArgs eventArgs)
     {
         var tasks = _options.MaxTasksPerIteration;
 

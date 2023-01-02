@@ -6,6 +6,7 @@
 
 using System.Diagnostics;
 using NosSmooth.LocalBinding.Errors;
+using NosSmooth.LocalBinding.EventArgs;
 using NosSmooth.LocalBinding.Extensions;
 using NosSmooth.LocalBinding.Options;
 using NosSmooth.LocalBinding.Structs;
@@ -101,7 +102,7 @@ public class UnitManagerBinding
     /// <remarks>
     /// The focus entity must be hooked for this event to be called.
     /// </remarks>
-    public event Func<MapBaseObj?, bool>? EntityFocus;
+    public event EventHandler<EntityEventArgs>? EntityFocusCall;
 
     /// <summary>
     /// Focus the entity.
@@ -163,6 +164,9 @@ public class UnitManagerBinding
             obj = new MapBaseObj(_bindingManager.Memory, entityId);
         }
 
-        return (EntityFocus?.Invoke(obj) ?? true) ? (nuint)1 : 0;
+        var entityEventArgs = new EntityEventArgs(obj);
+        EntityFocusCall?.Invoke(this, entityEventArgs);
+
+        return entityEventArgs.Cancel ? 0 : (nuint)1;
     }
 }

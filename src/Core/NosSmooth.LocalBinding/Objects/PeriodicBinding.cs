@@ -57,7 +57,7 @@ public class PeriodicBinding
     /// <summary>
     /// An action called on every period.
     /// </summary>
-    public event Action? Periodic;
+    public event EventHandler? PeriodicCall;
 
     /// <summary>
     /// Enable all networking hooks.
@@ -77,6 +77,6 @@ public class PeriodicBinding
 
     private void PeriodicDetour()
     {
-        Periodic?.Invoke();
+        PeriodicCall?.Invoke(this, System.EventArgs.Empty);
     }
 }

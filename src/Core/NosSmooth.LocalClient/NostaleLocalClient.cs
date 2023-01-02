@@ -13,6 +13,7 @@ using NosSmooth.Core.Commands.Control;
 using NosSmooth.Core.Extensions;
 using NosSmooth.Core.Packets;
 using NosSmooth.LocalBinding;
+using NosSmooth.LocalBinding.EventArgs;
 using NosSmooth.LocalBinding.Objects;
 using NosSmooth.LocalBinding.Structs;
 using NosSmooth.Packets;
@@ -97,8 +98,8 @@ public class NostaleLocalClient : BaseNostaleClient
         _stopRequested = stopRequested;
         _logger.LogInformation("Starting local client");
         _synchronizer.StartSynchronizer();
-        _networkBinding.PacketSend += SendCallback;
-        _networkBinding.PacketReceive += ReceiveCallback;
+        _networkBinding.PacketSendCall += SendCallCallback;
+        _networkBinding.PacketReceiveCall += ReceiveCallCallback;
 
         _playerManagerBinding.FollowEntityCall += FollowEntity;
         _playerManagerBinding.WalkCall += Walk;
@@ -113,8 +114,8 @@ public class NostaleLocalClient : BaseNostaleClient
             // ignored
         }
 
-        _networkBinding.PacketSend -= SendCallback;
-        _networkBinding.PacketReceive -= ReceiveCallback;
+        _networkBinding.PacketSendCall -= SendCallCallback;
+        _networkBinding.PacketReceiveCall -= ReceiveCallCallback;
         _playerManagerBinding.FollowEntityCall -= FollowEntity;
         _playerManagerBinding.WalkCall -= Walk;
         _petManagerBinding.PetWalkCall -= PetWalk;
@@ -138,9 +139,10 @@ public class NostaleLocalClient : BaseNostaleClient
         return Result.FromSuccess();
     }
 
-    private bool ReceiveCallback(string packet)
+    private void ReceiveCallCallback(object? owner, PacketEventArgs packetArgs)
     {
         bool accepted = true;
+        var packet = packetArgs.Packet;
         if (_options.AllowIntercept)
         {
             if (_interceptor is null)
@@ -153,12 +155,16 @@ public class NostaleLocalClient : BaseNostaleClient
 
         Task.Run(async () => await ProcessPacketAsync(PacketSource.Server, packet));
 
-        return accepted;
+        if (!accepted)
+        {
+            packetArgs.Cancel = true;
+        }
     }
 
-    private bool SendCallback(string packet)
+    private void SendCallCallback(object? owner, PacketEventArgs packetArgs)
     {
         bool accepted = true;
+        var packet = packetArgs.Packet;
         if (_options.AllowIntercept)
         {
             if (_interceptor is null)
@@ -171,7 +177,10 @@ public class NostaleLocalClient : BaseNostaleClient
 
         Task.Run(async () => await ProcessPacketAsync(PacketSource.Client, packet));
 
-        return accepted;
+        if (!accepted)
+        {
+            packetArgs.Cancel = true;
+        }
     }
 
     private void SendPacket(string packetString)
@@ -237,9 +246,9 @@ public class NostaleLocalClient : BaseNostaleClient
         }
     }
 
-    private bool FollowEntity(MapBaseObj? obj)
+    private void FollowEntity(object? owner, EntityEventArgs entityEventArgs)
     {
-        if (obj is not null)
+        if (entityEventArgs.Entity is not null)
         {
             Task.Run
             (
@@ -247,14 +256,14 @@ public class NostaleLocalClient : BaseNostaleClient
                     (ControlCommandsFilter.UserCancellable, false, (CancellationToken)_stopRequested!)
             );
         }
-        return true;
     }
 
-    private bool PetWalk(PetManager petManager, ushort x, ushort y)
+    private void PetWalk(object? owner, PetWalkEventArgs petWalkEventArgs)
     {
-        if (!_userActionDetector.IsPetWalkUserOperation(petManager, x, y))
+        if (!_userActionDetector.IsPetWalkUserOperation
+            (petWalkEventArgs.PetManager, petWalkEventArgs.X, petWalkEventArgs.Y))
         { // do not cancel operations made by NosTale or bot
-            return true;
+            return;
         }
 
         if (_controlCommands.AllowUserActions)
@@ -265,14 +274,17 @@ public class NostaleLocalClient : BaseNostaleClient
                     (ControlCommandsFilter.UserCancellable, false, (CancellationToken)_stopRequested!)
             );
         }
-        return _controlCommands.AllowUserActions;
+        else
+        {
+            petWalkEventArgs.Cancel = true;
+        }
     }
 
-    private bool Walk(ushort x, ushort y)
+    private void Walk(object? owner, WalkEventArgs walkEventArgs)
     {
-        if (!_userActionDetector.IsWalkUserAction(x, y))
+        if (!_userActionDetector.IsWalkUserAction(walkEventArgs.X, walkEventArgs.Y))
         { // do not cancel operations made by NosTale or bot
-            return true;
+            return;
         }
 
         if (_controlCommands.AllowUserActions)
@@ -283,6 +295,9 @@ public class NostaleLocalClient : BaseNostaleClient
                     (ControlCommandsFilter.UserCancellable, false, (CancellationToken)_stopRequested!)
             );
         }
-        return _controlCommands.AllowUserActions;
+        else
+        {
+            walkEventArgs.Cancel = true;
+        }
     }
 }

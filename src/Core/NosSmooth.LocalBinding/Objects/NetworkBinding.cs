@@ -8,6 +8,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using NosSmooth.LocalBinding.Errors;
+using NosSmooth.LocalBinding.EventArgs;
 using NosSmooth.LocalBinding.Extensions;
 using NosSmooth.LocalBinding.Options;
 using Reloaded.Hooks.Definitions;
@@ -102,7 +103,7 @@ public class NetworkBinding
     /// <remarks>
     /// The send must be hooked for this event to be called.
     /// </remarks>
-    public event Func<string, bool>? PacketSend;
+    public event EventHandler<PacketEventArgs>? PacketSendCall;
 
     /// <summary>
     /// Event that is called when packet receive was called by NosTale.
@@ -110,7 +111,7 @@ public class NetworkBinding
     /// <remarks>
     /// The receive must be hooked for this event to be called.
     /// </remarks>
-    public event Func<string, bool>? PacketReceive;
+    public event EventHandler<PacketEventArgs>? PacketReceiveCall;
 
     /// <summary>
     /// Send the given packet.
@@ -201,8 +202,9 @@ public class NetworkBinding
         { // ?
             return 1;
         }
-        var result = PacketSend?.Invoke(packet);
-        return result ?? true ? (nuint)1 : 0;
+        var packetArgs = new PacketEventArgs(packet);
+        PacketSendCall?.Invoke(this, packetArgs);
+        return packetArgs.Cancel ? 0 : (nuint)1;
     }
 
     private nuint ReceivePacketDetour(nuint packetObject, nuint packetString)
@@ -218,7 +220,8 @@ public class NetworkBinding
             return 1;
         }
 
-        var result = PacketReceive?.Invoke(packet);
-        return result ?? true ? (nuint)1 : 0;
+        var packetArgs = new PacketEventArgs(packet);
+        PacketReceiveCall?.Invoke(this, packetArgs);
+        return packetArgs.Cancel ? 0 : (nuint)1;
     }
 }

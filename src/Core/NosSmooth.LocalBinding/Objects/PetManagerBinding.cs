@@ -4,6 +4,7 @@
 //  Copyright (c) František Boháček. All rights reserved.
 //  Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using NosSmooth.LocalBinding.EventArgs;
 using NosSmooth.LocalBinding.Extensions;
 using NosSmooth.LocalBinding.Options;
 using NosSmooth.LocalBinding.Structs;
@@ -78,7 +79,7 @@ public class PetManagerBinding
     /// <remarks>
     /// The walk must be hooked for this event to be called.
     /// </remarks>
-    public event Func<PetManager, ushort, ushort, bool>? PetWalkCall;
+    public event EventHandler<PetWalkEventArgs>? PetWalkCall;
 
     /// <summary>
     /// Gets the hook of the pet walk function.
@@ -131,10 +132,8 @@ public class PetManagerBinding
 
             return lastResult;
         }
-        else
-        {
-            return _petWalkHook.OriginalFunction(PetManagerList[selector].Address, position);
-        }
+
+        return _petWalkHook.OriginalFunction(PetManagerList[selector].Address, position);
     }
 
     private bool PetWalkDetour
@@ -146,8 +145,13 @@ public class PetManagerBinding
         int unknown2 = 1
     )
     {
-        var result = PetWalkCall?.Invoke(new PetManager(_memory, petManagerPtr), (ushort)(position & 0xFFFF), (ushort)((position >> 16) & 0xFFFF));
-        if (result ?? true)
+        var x = (ushort)(position & 0xFFFF);
+        var y = (ushort)((position >> 16) & 0xFFFF);
+        var petManager = new PetManager(_memory, petManagerPtr);
+        var petWalkEventArgs = new PetWalkEventArgs(petManager, x, y);
+        PetWalkCall?.Invoke(this, petWalkEventArgs);
+
+        if (!petWalkEventArgs.Cancel)
         {
             return _petWalkHook.OriginalFunction
             (

@@ -4,8 +4,10 @@
 //  Copyright (c) František Boháček. All rights reserved.
 //  Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.ComponentModel;
 using System.Diagnostics;
 using NosSmooth.LocalBinding.Errors;
+using NosSmooth.LocalBinding.EventArgs;
 using NosSmooth.LocalBinding.Extensions;
 using NosSmooth.LocalBinding.Options;
 using NosSmooth.LocalBinding.Structs;
@@ -122,7 +124,7 @@ public class PlayerManagerBinding
     /// <remarks>
     /// The walk must be hooked for this event to be called.
     /// </remarks>
-    public event Func<ushort, ushort, bool>? WalkCall;
+    public event EventHandler<WalkEventArgs>? WalkCall;
 
     /// <summary>
     /// Event that is called when entity follow or unfollow was called.
@@ -130,7 +132,7 @@ public class PlayerManagerBinding
     /// <remarks>
     /// The follow/unfollow entity must be hooked for this event to be called.
     /// </remarks>
-    public event Func<MapBaseObj?, bool>? FollowEntityCall;
+    public event EventHandler<EntityEventArgs>? FollowEntityCall;
 
     /// <summary>
     /// Disable all PlayerManager hooks.
@@ -173,8 +175,9 @@ public class PlayerManagerBinding
 
     private bool WalkDetour(nuint characterObject, int position, short unknown0, int unknown1)
     {
-        var result = WalkCall?.Invoke((ushort)(position & 0xFFFF), (ushort)((position >> 16) & 0xFFFF));
-        if (result ?? true)
+        var walkEventArgs = new WalkEventArgs((ushort)(position & 0xFFFF), (ushort)((position >> 16) & 0xFFFF));
+        WalkCall?.Invoke(this, walkEventArgs);
+        if (!walkEventArgs.Cancel)
         {
             return _walkHook.OriginalFunction(characterObject, position, unknown0, unknown1);
         }
@@ -235,8 +238,9 @@ public class PlayerManagerBinding
         int unknown2
     )
     {
-        var result = FollowEntityCall?.Invoke(new MapBaseObj(_bindingManager.Memory, entityPtr));
-        if (result ?? true)
+        var entityEventArgs = new EntityEventArgs(new MapBaseObj(_bindingManager.Memory, entityPtr));
+        FollowEntityCall?.Invoke(this, entityEventArgs);
+        if (!entityEventArgs.Cancel)
         {
             return _followHook.OriginalFunction(playerManagerPtr, entityPtr, unknown1, unknown2);
         }
@@ -246,8 +250,9 @@ public class PlayerManagerBinding
 
     private void UnfollowEntityDetour(nuint playerManagerPtr, int unknown)
     {
-        var result = FollowEntityCall?.Invoke(null);
-        if (result ?? true)
+        var entityEventArgs = new EntityEventArgs(null);
+        FollowEntityCall?.Invoke(this, entityEventArgs);
+        if (!entityEventArgs.Cancel)
         {
             _unfollowHook.OriginalFunction(playerManagerPtr, unknown);
         }
