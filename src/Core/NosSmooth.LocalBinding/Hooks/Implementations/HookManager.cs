@@ -57,6 +57,11 @@ internal class HookManager : IHookManager
     /// <inheritdoc/>
     public IResult Initialize(NosBindingManager bindingManager, NosBrowserManager browserManager)
     {
+        if (_hooks.Count > 0)
+        { // already initialized
+            return Result.FromSuccess();
+        }
+
         return HandleResults
         (
             () => PeriodicHook.Create(bindingManager, _options.PeriodicHook).Map(MapHook),
