@@ -5,6 +5,7 @@
 //  Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Diagnostics;
+using System.Reflection;
 using Microsoft.Extensions.Options;
 using NosSmooth.LocalBinding.Errors;
 using NosSmooth.LocalBinding.Hooks;
@@ -14,6 +15,8 @@ using NosSmooth.LocalBinding.Options;
 using Reloaded.Hooks;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Helpers;
+using Reloaded.Hooks.Definitions.Internal;
+using Reloaded.Hooks.Definitions.X86;
 using Reloaded.Hooks.Tools;
 using Reloaded.Hooks.X86;
 using Reloaded.Memory.Sigscan;
@@ -168,6 +171,7 @@ public class NosBindingManager : IDisposable
             HookOptions options,
             bool cancellable = true
         )
+        where TFunction : Delegate
     {
         var walkFunctionAddress = Scanner.FindPattern(options.MemoryPattern);
         if (!walkFunctionAddress.Found)
@@ -183,6 +187,15 @@ public class NosBindingManager : IDisposable
             var reverseWrapper = Hooks.CreateReverseWrapper<TFunction>(callbackFunction);
             var callDetour = Utilities.GetAbsoluteCallMnemonics
                 (reverseWrapper.WrapperPointer.ToUnsigned(), IntPtr.Size == 8);
+            if (!Misc.TryGetAttribute<TFunction, FunctionAttribute>(out var attribute))
+            {
+                return new ArgumentInvalidError(nameof(TFunction), "The function does not have a function attribute.");
+            }
+            var stackArgumentsCount = Utilities.GetNumberofParameters<TFunction>() - attribute.SourceRegisters.Length;
+            if (stackArgumentsCount < 0)
+            {
+                stackArgumentsCount = 0;
+            }
 
             var asmInstructions = new List<string>();
 
@@ -191,10 +204,21 @@ public class NosBindingManager : IDisposable
                 "use32",
                 "pushad",
                 "pushfd",
-
-                // call managed function
-                callDetour
             });
+
+            for (int i = 0; i < stackArgumentsCount; i++)
+            { // TODO make it into asm loop
+                asmInstructions.AddRange(new[]
+                {
+                    $"add esp, {36 + (4 * stackArgumentsCount)}",
+                    "pop ebx",
+                    "sub esp, 0x04",
+                    $"sub esp, {36 + (4 * stackArgumentsCount)}",
+                    "push ebx",
+                });
+            }
+
+            asmInstructions.Add(callDetour);
 
             if (cancellable)
             {
@@ -211,7 +235,8 @@ public class NosBindingManager : IDisposable
                         // returned 0, going to return early
                         "popfd",
                         "popad",
-                        "ret", // return early
+
+                        $"ret {4 * stackArgumentsCount}", // return early
                     }
                 );
             }
