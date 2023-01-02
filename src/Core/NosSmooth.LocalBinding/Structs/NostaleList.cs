@@ -71,7 +71,7 @@ public abstract class NostaleList<T> : IEnumerable<T>
     }
 
     /// <summary>
-    /// Create a new instance of <see cref="T"/> with the given memory and address.
+    /// Create a new instance of <typeparamref name="T"/> with the given memory and address.
     /// </summary>
     /// <param name="memory">The memory.</param>
     /// <param name="address">The address.</param>
