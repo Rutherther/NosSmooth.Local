@@ -20,9 +20,7 @@ namespace NosSmooth.Extensions.SharedBinding;
 public class SharedManager
 {
     private static SharedManager? _instance;
-    private NosBindingManager? _bindingManager;
-    private NostaleDataFilesManager? _filesManager;
-    private IPacketTypesRepository? _packetRepository;
+    private Dictionary<Type, object> _sharedData = new();
 
     /// <summary>
     /// A singleton instance.
@@ -41,58 +39,33 @@ public class SharedManager
         }
     }
 
-    /// <summary>
-    /// Gets the shared nos binding manager.
-    /// </summary>
-    /// <param name="services">The service provider.</param>
-    /// <returns>The shared manager.</returns>
-    public NosBindingManager GetNosBindingManager(IServiceProvider services)
+    private SharedManager()
     {
-        if (_bindingManager is null)
-        {
-            _bindingManager = GetFromDescriptor<NosBindingManager>(services, o => o.BindingDescriptor);
-        }
-
-        return _bindingManager;
-
     }
 
     /// <summary>
-    /// Gets the shared file manager.
+    /// Get shared equivalent of the given type.
     /// </summary>
     /// <param name="services">The service provider.</param>
-    /// <returns>The shared manager.</returns>
-    public NostaleDataFilesManager GetFilesManager(IServiceProvider services)
+    /// <typeparam name="T">The type to get shared instance of.</typeparam>
+    /// <returns>The shared instance.</returns>
+    /// <exception cref="InvalidOperationException">Thrown in case the type is not shared.</exception>
+    public T GetShared<T>(IServiceProvider services)
+        where T : class
     {
-        if (_filesManager is null)
+        if (!_sharedData.ContainsKey(typeof(T)))
         {
-            _filesManager = GetFromDescriptor<NostaleDataFilesManager>(services, o => o.FileDescriptor);
+            _sharedData[typeof(T)] = CreateShared<T>(services);
         }
 
-        return _filesManager;
-
+        return (T)_sharedData[typeof(T)];
     }
 
-    /// <summary>
-    /// Gets the shared packet type repository.
-    /// </summary>
-    /// <param name="services">The service provider.</param>
-    /// <returns>The shared repository.</returns>
-    public IPacketTypesRepository GetPacketRepository(IServiceProvider services)
-    {
-        if (_packetRepository is null)
-        {
-            _packetRepository = GetFromDescriptor<IPacketTypesRepository>(services, o => o.PacketRepositoryDescriptor);
-        }
-
-        return _packetRepository;
-
-    }
-
-    private T GetFromDescriptor<T>(IServiceProvider services, Func<SharedOptions, ServiceDescriptor?> getDescriptor)
+    private T CreateShared<T>(IServiceProvider services)
+        where T : class
     {
         var options = services.GetRequiredService<IOptions<SharedOptions>>();
-        var descriptor = getDescriptor(options.Value);
+        var descriptor = options.Value.GetDescriptor(typeof(T));
 
         if (descriptor is null)
         {

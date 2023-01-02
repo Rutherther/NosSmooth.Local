@@ -16,18 +16,30 @@ namespace NosSmooth.Extensions.SharedBinding;
 /// </summary>
 internal class SharedOptions
 {
-    /// <summary>
-    /// Gets or sets the original descriptor of <see cref="NosBindingManager"/>.
-    /// </summary>
-    public ServiceDescriptor? BindingDescriptor { get; set; }
+    private Dictionary<Type, ServiceDescriptor> _descriptors = new();
 
     /// <summary>
-    /// Gets or sets the original descriptor of <see cref="NostaleDataFilesManager"/>.
+    /// Add service descriptor for given type.
     /// </summary>
-    public ServiceDescriptor? FileDescriptor { get; set; }
+    /// <param name="descriptor">The service descriptor.</param>
+    public void AddDescriptor(ServiceDescriptor descriptor)
+    {
+        var type = descriptor.ServiceType;
+        if (_descriptors.ContainsKey(type))
+        {
+            return;
+        }
+
+        _descriptors[type] = descriptor;
+    }
 
     /// <summary>
-    /// Gets or sets the original descriptor of <see cref="IPacketTypesRepository"/>.
+    /// Get descriptor for the given type.
     /// </summary>
-    public ServiceDescriptor? PacketRepositoryDescriptor { get; set; }
+    /// <param name="type">The type of the descriptor.</param>
+    /// <returns>A descriptor.</returns>
+    public ServiceDescriptor GetDescriptor(Type type)
+    {
+        return _descriptors[type];
+    }
 }

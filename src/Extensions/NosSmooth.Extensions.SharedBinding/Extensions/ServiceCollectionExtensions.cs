@@ -4,10 +4,13 @@
 //  Copyright (c) František Boháček. All rights reserved.
 //  Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using NosSmooth.Data.NOSFiles;
+using NosSmooth.Extensions.SharedBinding.Hooks;
 using NosSmooth.LocalBinding;
+using NosSmooth.LocalBinding.Hooks;
 using NosSmooth.PacketSerializer.Packets;
 
 namespace NosSmooth.Extensions.SharedBinding.Extensions;
@@ -18,81 +21,80 @@ namespace NosSmooth.Extensions.SharedBinding.Extensions;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Replaces <see cref="NosBindingManager"/>
-    /// with shared equivalent. That allows for multiple programs injected inside NosTale.
+    /// Adds shared <see cref="IHookManager"/>.
     /// </summary>
     /// <param name="serviceCollection">The collection.</param>
     /// <returns>The same collection.</returns>
-    public static IServiceCollection ShareBinding(this IServiceCollection serviceCollection)
+    public static IServiceCollection ShareHooks(this IServiceCollection serviceCollection)
     {
         var original = serviceCollection
-            .Last(x => x.ServiceType == typeof(NosBindingManager));
+            .Last(x => x.ServiceType == typeof(IHookManager));
+        serviceCollection.Configure<SharedOptions>(o => o.AddDescriptor(original));
 
         return serviceCollection
-            .Configure<SharedOptions>(o => o.BindingDescriptor = original)
-            .Replace
-                (ServiceDescriptor.Singleton<NosBindingManager>(p => SharedManager.Instance.GetNosBindingManager(p)));
+            .AddSingleton<SharedHookManager>
+            (
+                p =>
+                {
+                    var sharedHookManager = p.GetRequiredService<SharedManager>().GetShared<IHookManager>(p);
+                    return new SharedHookManager(sharedHookManager);
+                }
+            )
+            .Replace(ServiceDescriptor.Singleton<IHookManager, SingleHookManager>());
     }
 
     /// <summary>
-    /// Replaces <see cref="NostaleDataFilesManager"/>
+    /// Replaces <typeparamref name="T"/>
     /// with shared equivalent. That allows for multiple programs injected inside NosTale.
     /// </summary>
     /// <param name="serviceCollection">The collection.</param>
+    /// <typeparam name="T">The shared type.</typeparam>
     /// <returns>The same collection.</returns>
-    public static IServiceCollection ShareFileManager(this IServiceCollection serviceCollection)
+    public static IServiceCollection Share<T>(this IServiceCollection serviceCollection)
+        where T : class
     {
         var original = serviceCollection
-            .Last(x => x.ServiceType == typeof(NostaleDataFilesManager));
+            .Last(x => x.ServiceType == typeof(T));
 
         return serviceCollection
-            .Configure<SharedOptions>(o => o.FileDescriptor = original)
-            .Replace
-                (ServiceDescriptor.Singleton<NostaleDataFilesManager>(p => SharedManager.Instance.GetFilesManager(p)));
-    }
-
-    /// <summary>
-    /// Replaces <see cref="IPacketTypesRepository"/>
-    /// with shared equivalent. That allows for multiple programs injected inside NosTale.
-    /// </summary>
-    /// <param name="serviceCollection">The collection.</param>
-    /// <returns>The same collection.</returns>
-    public static IServiceCollection SharePacketRepository(this IServiceCollection serviceCollection)
-    {
-        var original = serviceCollection
-            .Last(x => x.ServiceType == typeof(IPacketTypesRepository));
-
-        return serviceCollection
-            .Configure<SharedOptions>(o => o.PacketRepositoryDescriptor = original)
+            .Configure<SharedOptions>(o => o.AddDescriptor(original))
             .Replace
             (
-                ServiceDescriptor.Singleton<IPacketTypesRepository>(p => SharedManager.Instance.GetPacketRepository(p))
+                ServiceDescriptor.Singleton<T>(p => SharedManager.Instance.GetShared<T>(p))
             );
     }
 
     /// <summary>
-    /// Replaces <see cref="NosBindingManager"/>, <see cref="NostaleDataFilesManager"/> and <see cref="IPacketTypesRepository"/>
-    /// with their shared equvivalents. That allows for multiple programs injected inside NosTale.
+    /// Tries to replace <see cref="T"/>
+    /// with shared equivalent. That allows for multiple programs injected inside NosTale.
+    /// </summary>
+    /// <param name="serviceCollection">The collection.</param>
+    /// <typeparam name="T">The shared type.</typeparam>
+    /// <returns>The same collection.</returns>
+    public static IServiceCollection TryShare<T>(this IServiceCollection serviceCollection)
+        where T : class
+    {
+        if (serviceCollection.Any(x => x.ServiceType == typeof(T)))
+        {
+            return serviceCollection.Share<T>();
+        }
+
+        return serviceCollection;
+    }
+
+    /// <summary>
+    /// Replaces some NosSmooth types with their shared equivalents.
+    /// That allows for multiple programs injected inside NosTale.
     /// </summary>
     /// <param name="serviceCollection">The collection.</param>
     /// <returns>The same collection.</returns>
     public static IServiceCollection ShareNosSmooth(this IServiceCollection serviceCollection)
     {
-        if (serviceCollection.Any(x => x.ServiceType == typeof(NosBindingManager)))
-        {
-            serviceCollection.ShareBinding();
-        }
-
-        if (serviceCollection.Any(x => x.ServiceType == typeof(NostaleDataFilesManager)))
-        {
-            serviceCollection.ShareFileManager();
-        }
-
-        if (serviceCollection.Any(x => x.ServiceType == typeof(IPacketTypesRepository)))
-        {
-            serviceCollection.SharePacketRepository();
-        }
-
-        return serviceCollection;
+        return serviceCollection
+            .AddSingleton<SharedManager>(p => SharedManager.Instance)
+            .ShareHooks()
+            .TryShare<NosBrowserManager>()
+            .TryShare<IPacketTypesRepository>()
+            .TryShare<NostaleDataFilesManager>();
     }
 }
