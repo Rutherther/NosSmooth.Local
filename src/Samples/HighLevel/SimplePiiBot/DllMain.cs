@@ -81,7 +81,6 @@ public class DllMain
                     s.AddNostaleCore()
                         .AddNostaleGame()
                         .AddLocalClient()
-                        .ShareNosSmooth()
                         .AddNostaleDataFiles()
                         .ShareNosSmooth()
                         .AddNostaleCombat()
