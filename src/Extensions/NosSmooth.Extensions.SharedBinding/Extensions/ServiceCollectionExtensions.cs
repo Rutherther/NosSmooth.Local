@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using NosSmooth.Data.NOSFiles;
 using NosSmooth.Extensions.SharedBinding.Hooks;
 using NosSmooth.LocalBinding;
+using NosSmooth.LocalBinding.Extensions;
 using NosSmooth.LocalBinding.Hooks;
 using NosSmooth.PacketSerializer.Packets;
 
@@ -27,19 +28,22 @@ public static class ServiceCollectionExtensions
     /// <returns>The same collection.</returns>
     public static IServiceCollection ShareHooks(this IServiceCollection serviceCollection)
     {
-        var original = serviceCollection
+        var originalHookManager = serviceCollection
             .Last(x => x.ServiceType == typeof(IHookManager));
-        serviceCollection.Configure<SharedOptions>(o => o.AddDescriptor(original));
+
+        var sharedHookManager = ServiceDescriptor.Singleton<SharedHookManager>
+        (
+            p =>
+            {
+                var sharedHookManager = p.GetRequiredService<SharedManager>().GetShared<IHookManager>(p);
+                return new SharedHookManager(sharedHookManager);
+            }
+        );
 
         return serviceCollection
-            .AddSingleton<SharedHookManager>
-            (
-                p =>
-                {
-                    var sharedHookManager = p.GetRequiredService<SharedManager>().GetShared<IHookManager>(p);
-                    return new SharedHookManager(sharedHookManager);
-                }
-            )
+            .Configure<SharedOptions>(o => o.AddDescriptor(originalHookManager))
+            .Configure<SharedOptions>(o => o.AddDescriptor(sharedHookManager))
+            .AddSingleton<SharedHookManager>(p => SharedManager.Instance.GetShared<SharedHookManager>(p))
             .Replace(ServiceDescriptor.Singleton<IHookManager, SingleHookManager>());
     }
 
