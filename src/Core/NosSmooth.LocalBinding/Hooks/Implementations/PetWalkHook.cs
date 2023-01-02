@@ -49,7 +49,7 @@ internal class PetWalkHook : CancelableNostaleHook<IPetWalkHook.PetWalkDelegate,
 
     /// <inheritdoc />
     public override IPetWalkHook.PetWalkWrapperDelegate WrapperFunction
-        => (p, x, y) => OriginalFunction(p.Address, ((int)x << 16) | (int)y) == 1;
+        => (p, x, y) => OriginalFunction(p.Address, (y << 16) | x) == 1;
 
     /// <inheritdoc />
     protected override IPetWalkHook.PetWalkDelegate WrapWithCalling(IPetWalkHook.PetWalkDelegate function)
@@ -77,7 +77,7 @@ internal class PetWalkHook : CancelableNostaleHook<IPetWalkHook.PetWalkDelegate,
     {
         var petManager = new PetManager(_memory, petManagerPtr);
         var walkArgs = new PetWalkEventArgs
-            (petManager, (ushort)((position >> 16) & 0xFFFF), (ushort)(position & 0xFFFF));
+            (petManager, (ushort)(position & 0xFFFF), (ushort)((position >> 16) & 0xFFFF));
         return HandleCall(walkArgs);
     }
 }

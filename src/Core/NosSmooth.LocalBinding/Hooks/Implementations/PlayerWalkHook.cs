@@ -27,12 +27,12 @@ internal class PlayerWalkHook : CancelableNostaleHook<IPlayerWalkHook.WalkDelega
         (NosBindingManager bindingManager, NosBrowserManager browserManager, HookOptions<IPlayerWalkHook> options)
     {
         var hook = CreateHook
-            (
-                bindingManager,
-                () => new PlayerWalkHook(browserManager.PlayerManager),
-                hook => hook.Detour,
-                options
-            );
+        (
+            bindingManager,
+            () => new PlayerWalkHook(browserManager.PlayerManager),
+            hook => hook.Detour,
+            options
+        );
 
         return hook;
     }
@@ -51,22 +51,34 @@ internal class PlayerWalkHook : CancelableNostaleHook<IPlayerWalkHook.WalkDelega
     public override IPlayerWalkHook.WalkWrapperDelegate WrapperFunction => (x, y) =>
     {
         var playerManagerObject = _playerManager.Address;
-        return OriginalFunction(playerManagerObject, ((int)x << 16) | (int)y) == 1;
+        return OriginalFunction(playerManagerObject,  (y << 16) | x) == 1;
     };
 
     /// <inheritdoc />
     protected override IPlayerWalkHook.WalkDelegate WrapWithCalling(IPlayerWalkHook.WalkDelegate function)
-        => (playerManagerPtr, position, un0, un1) =>
-        {
-            CallingFromNosSmooth = true;
-            var res = function(playerManagerPtr, position, un0, un1);
-            CallingFromNosSmooth = false;
-            return res;
-        };
+        =>
+            (
+                playerManagerPtr,
+                position,
+                un0,
+                un1
+            ) =>
+            {
+                CallingFromNosSmooth = true;
+                var res = function(playerManagerPtr, position, un0, un1);
+                CallingFromNosSmooth = false;
+                return res;
+            };
 
-    private nuint Detour(nuint playerManagerPtr, int position, short un0, int un1)
+    private nuint Detour
+    (
+        nuint playerManagerPtr,
+        int position,
+        short un0,
+        int un1
+    )
     {
-        var walkArgs = new WalkEventArgs((ushort)((position >> 16) & 0xFFFF), (ushort)(position & 0xFFFF));
+        var walkArgs = new WalkEventArgs((ushort)(position & 0xFFFF), (ushort)((position >> 16) & 0xFFFF));
         return HandleCall(walkArgs);
     }
 }
