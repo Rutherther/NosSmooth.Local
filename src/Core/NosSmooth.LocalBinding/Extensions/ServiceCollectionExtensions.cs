@@ -5,7 +5,10 @@
 //  Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Microsoft.Extensions.DependencyInjection;
+using NosSmooth.LocalBinding.Hooks;
+using NosSmooth.LocalBinding.Hooks.Implementations;
 using NosSmooth.LocalBinding.Objects;
+using NosSmooth.LocalBinding.Options;
 using NosSmooth.LocalBinding.Structs;
 
 namespace NosSmooth.LocalBinding.Extensions;
@@ -19,8 +22,9 @@ public static class ServiceCollectionExtensions
     /// Adds bindings to Nostale objects along with <see cref="NosBindingManager"/> to initialize those.
     /// </summary>
     /// <remarks>
-    /// Adds <see cref="PlayerManagerBinding"/> and <see cref="NetworkBinding"/>.
-    /// You have to initialize these using <see cref="NosBindingManager"/>
+    /// This adds <see cref="NosBindingManager"/>, <see cref="NosBrowserManager"/>,
+    /// <see cref="IHookManager"/> and their siblings.
+    /// You have to initialize the bindings using <see cref="NosBindingManager"/>
     /// prior to requesting them from the provider, otherwise an exception
     /// will be thrown.
     /// </remarks>
@@ -32,16 +36,31 @@ public static class ServiceCollectionExtensions
             .AddSingleton<NosBindingManager>()
             .AddSingleton<NosBrowserManager>()
             .AddSingleton<NosThreadSynchronizer>()
+            .AddSingleton<IHookManager, HookManager>()
+            .AddSingleton<IPacketReceiveHook>(p => p.GetRequiredService<IHookManager>().PacketReceive)
+            .AddSingleton<IPacketSendHook>(p => p.GetRequiredService<IHookManager>().PacketSend)
+            .AddSingleton<IEntityFollowHook>(p => p.GetRequiredService<IHookManager>().EntityFollow)
+            .AddSingleton<IEntityUnfollowHook>(p => p.GetRequiredService<IHookManager>().EntityUnfollow)
+            .AddSingleton<IEntityFocusHook>(p => p.GetRequiredService<IHookManager>().EntityFocus)
+            .AddSingleton<IPlayerWalkHook>(p => p.GetRequiredService<IHookManager>().PlayerWalk)
+            .AddSingleton<IPetWalkHook>(p => p.GetRequiredService<IHookManager>().PetWalk)
+            .AddSingleton<IPeriodicHook>(p => p.GetRequiredService<IHookManager>().Periodic)
             .AddSingleton(p => p.GetRequiredService<NosBrowserManager>().PlayerManager)
             .AddSingleton(p => p.GetRequiredService<NosBrowserManager>().SceneManager)
             .AddSingleton(p => p.GetRequiredService<NosBrowserManager>().PetManagerList)
             .AddSingleton(p => p.GetRequiredService<NosBrowserManager>().SceneManager)
             .AddSingleton(p => p.GetRequiredService<NosBrowserManager>().PetManagerList)
-            .AddSingleton(p => p.GetRequiredService<NosBindingManager>().PlayerManager)
-            .AddSingleton(p => p.GetRequiredService<NosBindingManager>().Periodic)
-            .AddSingleton(p => p.GetRequiredService<NosBindingManager>().PetManager)
-            .AddSingleton(p => p.GetRequiredService<NosBindingManager>().UnitManager)
-            .AddSingleton(p => p.GetRequiredService<NosBindingManager>().Network);
+            .AddSingleton(p => p.GetRequiredService<NosBrowserManager>().PlayerManager)
+            .AddSingleton(p => p.GetRequiredService<NosBrowserManager>().NetworkManager)
+            .AddSingleton(p => p.GetRequiredService<NosBrowserManager>().UnitManager)
+            .AddSingleton(p => p.GetRequiredService<IHookManager>().PacketReceive)
+            .AddSingleton(p => p.GetRequiredService<IHookManager>().PacketSend)
+            .AddSingleton(p => p.GetRequiredService<IHookManager>().PlayerWalk)
+            .AddSingleton(p => p.GetRequiredService<IHookManager>().PetWalk)
+            .AddSingleton(p => p.GetRequiredService<IHookManager>().EntityFocus)
+            .AddSingleton(p => p.GetRequiredService<IHookManager>().EntityFollow)
+            .AddSingleton(p => p.GetRequiredService<IHookManager>().EntityUnfollow)
+            .AddSingleton(p => p.GetRequiredService<IHookManager>().Periodic);
     }
 
     /// <summary>
@@ -52,7 +71,7 @@ public static class ServiceCollectionExtensions
     /// <returns>The collection.</returns>
     public static IServiceCollection ConfigureHooks(this IServiceCollection serviceCollection, Action<HooksConfigBuilder> configure)
     {
-        var builder = new HooksConfigBuilder();
+        var builder = new HooksConfigBuilder(new HookManagerOptions());
         configure(builder);
         builder.Apply(serviceCollection);
         return serviceCollection;

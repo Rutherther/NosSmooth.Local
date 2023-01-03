@@ -4,6 +4,7 @@
 //  Copyright (c) František Boháček. All rights reserved.
 //  Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using Microsoft.Extensions.Logging;
 using NosSmooth.Core.Client;
 using NosSmooth.LocalClient;
@@ -61,10 +62,10 @@ namespace InterceptNameChanger
         /// <inheritdoc/>
         public bool InterceptReceive(ref string packet)
         {
-            if (packet.StartsWith("c_info"))
+            if (packet.StartsWith("c_info "))
             {
                 var oldPart = packet.Substring(packet.IndexOf(' ', 7));
-                var result = _client.ReceivePacketAsync($"c_info {_name} " + oldPart)
+                var result = _client.ReceivePacketAsync($"c_info {_name}" + oldPart)
                     .GetAwaiter().GetResult(); // Change the name
 
                 if (!result.IsSuccess)

@@ -9,6 +9,7 @@ using NosSmooth.Extensions.Combat.Errors;
 using NosSmooth.Game;
 using NosSmooth.Game.Apis;
 using NosSmooth.LocalBinding;
+using NosSmooth.LocalBinding.Hooks;
 using NosSmooth.LocalBinding.Objects;
 using NosSmooth.LocalBinding.Structs;
 using NosSmooth.Packets.Enums.Chat;
@@ -24,36 +25,32 @@ namespace SimplePiiBot.Commands;
 public class EntityCommands : CommandGroup
 {
     private readonly Game _game;
+    private readonly IHookManager _hookManager;
     private readonly NosThreadSynchronizer _synchronizer;
-    private readonly UnitManagerBinding _unitManagerBinding;
     private readonly SceneManager _sceneManager;
-    private readonly PlayerManagerBinding _playerManagerBinding;
     private readonly FeedbackService _feedbackService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="EntityCommands"/> class.
     /// </summary>
     /// <param name="game">The game.</param>
+    /// <param name="hookManager">The hook manager.</param>
     /// <param name="synchronizer">The thread synchronizer.</param>
-    /// <param name="unitManagerBinding">The scene manager binding.</param>
     /// <param name="sceneManager">The scene manager.</param>
-    /// <param name="playerManagerBinding">The character binding.</param>
     /// <param name="feedbackService">The feedback service.</param>
     public EntityCommands
     (
         Game game,
+        IHookManager hookManager,
         NosThreadSynchronizer synchronizer,
-        UnitManagerBinding unitManagerBinding,
         SceneManager sceneManager,
-        PlayerManagerBinding playerManagerBinding,
         FeedbackService feedbackService
     )
     {
         _game = game;
+        _hookManager = hookManager;
         _synchronizer = synchronizer;
-        _unitManagerBinding = unitManagerBinding;
         _sceneManager = sceneManager;
-        _playerManagerBinding = playerManagerBinding;
         _feedbackService = feedbackService;
     }
 
@@ -117,7 +114,11 @@ public class EntityCommands : CommandGroup
 
         return await _synchronizer.SynchronizeAsync
         (
-            () => _unitManagerBinding.FocusEntity(entityResult.Entity),
+            () =>
+            {
+                _hookManager.EntityFocus.WrapperFunction(entityResult.Entity);
+                return Result.FromSuccess();
+            },
             CancellationToken
         );
     }
@@ -131,14 +132,18 @@ public class EntityCommands : CommandGroup
     public async Task<Result> HandleFollowAsync(int entityId)
     {
         var entityResult = _sceneManager.FindEntity(entityId);
-        if (!entityResult.IsSuccess)
+        if (!entityResult.IsDefined(out var entity))
         {
             return Result.FromError(entityResult);
         }
 
         return await _synchronizer.SynchronizeAsync
         (
-            () => _playerManagerBinding.FollowEntity(entityResult.Entity),
+            () =>
+            {
+                _hookManager.EntityFollow.WrapperFunction(entity);
+                return Result.FromSuccess();
+            },
             CancellationToken
         );
     }
@@ -152,7 +157,11 @@ public class EntityCommands : CommandGroup
     {
         return await _synchronizer.SynchronizeAsync
         (
-            () => _playerManagerBinding.UnfollowEntity(),
+            () =>
+            {
+                _hookManager.EntityUnfollow.WrapperFunction();
+                return Result.FromSuccess();
+            },
             CancellationToken
         );
     }

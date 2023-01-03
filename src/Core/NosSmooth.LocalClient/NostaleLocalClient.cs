@@ -14,6 +14,7 @@ using NosSmooth.Core.Extensions;
 using NosSmooth.Core.Packets;
 using NosSmooth.LocalBinding;
 using NosSmooth.LocalBinding.EventArgs;
+using NosSmooth.LocalBinding.Hooks;
 using NosSmooth.LocalBinding.Objects;
 using NosSmooth.LocalBinding.Structs;
 using NosSmooth.Packets;
@@ -34,9 +35,7 @@ namespace NosSmooth.LocalClient;
 public class NostaleLocalClient : BaseNostaleClient
 {
     private readonly NosThreadSynchronizer _synchronizer;
-    private readonly NetworkBinding _networkBinding;
-    private readonly PlayerManagerBinding _playerManagerBinding;
-    private readonly PetManagerBinding _petManagerBinding;
+    private readonly IHookManager _hookManager;
     private readonly ControlCommands _controlCommands;
     private readonly IPacketSerializer _packetSerializer;
     private readonly PacketHandler _packetHandler;
@@ -51,9 +50,7 @@ public class NostaleLocalClient : BaseNostaleClient
     /// Initializes a new instance of the <see cref="NostaleLocalClient"/> class.
     /// </summary>
     /// <param name="synchronizer">The thread synchronizer.</param>
-    /// <param name="networkBinding">The network binding.</param>
-    /// <param name="playerManagerBinding">The player manager binding.</param>
-    /// <param name="petManagerBinding">The pet manager binding.</param>
+    /// <param name="hookManager">The hook manager.</param>
     /// <param name="controlCommands">The control commands.</param>
     /// <param name="commandProcessor">The command processor.</param>
     /// <param name="packetSerializer">The packet serializer.</param>
@@ -65,9 +62,7 @@ public class NostaleLocalClient : BaseNostaleClient
     public NostaleLocalClient
     (
         NosThreadSynchronizer synchronizer,
-        NetworkBinding networkBinding,
-        PlayerManagerBinding playerManagerBinding,
-        PetManagerBinding petManagerBinding,
+        IHookManager hookManager,
         ControlCommands controlCommands,
         CommandProcessor commandProcessor,
         IPacketSerializer packetSerializer,
@@ -81,9 +76,7 @@ public class NostaleLocalClient : BaseNostaleClient
     {
         _options = options.Value;
         _synchronizer = synchronizer;
-        _networkBinding = networkBinding;
-        _playerManagerBinding = playerManagerBinding;
-        _petManagerBinding = petManagerBinding;
+        _hookManager = hookManager;
         _controlCommands = controlCommands;
         _packetSerializer = packetSerializer;
         _packetHandler = packetHandler;
@@ -98,12 +91,12 @@ public class NostaleLocalClient : BaseNostaleClient
         _stopRequested = stopRequested;
         _logger.LogInformation("Starting local client");
         _synchronizer.StartSynchronizer();
-        _networkBinding.PacketSendCall += SendCallCallback;
-        _networkBinding.PacketReceiveCall += ReceiveCallCallback;
+        _hookManager.PacketSend.Called += SendCallCallback;
+        _hookManager.PacketReceive.Called += ReceiveCallCallback;
 
-        _playerManagerBinding.FollowEntityCall += FollowEntity;
-        _playerManagerBinding.WalkCall += Walk;
-        _petManagerBinding.PetWalkCall += PetWalk;
+        _hookManager.EntityFollow.Called += FollowEntity;
+        _hookManager.PlayerWalk.Called += Walk;
+        _hookManager.PetWalk.Called += PetWalk;
 
         try
         {
@@ -114,11 +107,15 @@ public class NostaleLocalClient : BaseNostaleClient
             // ignored
         }
 
-        _networkBinding.PacketSendCall -= SendCallCallback;
-        _networkBinding.PacketReceiveCall -= ReceiveCallCallback;
-        _playerManagerBinding.FollowEntityCall -= FollowEntity;
-        _playerManagerBinding.WalkCall -= Walk;
-        _petManagerBinding.PetWalkCall -= PetWalk;
+        _hookManager.PacketSend.Called -= SendCallCallback;
+        _hookManager.PacketReceive.Called -= ReceiveCallCallback;
+
+        _hookManager.EntityFollow.Called -= FollowEntity;
+        _hookManager.PlayerWalk.Called -= Walk;
+        _hookManager.PetWalk.Called -= PetWalk;
+
+        // the hooks are not needed anymore.
+        _hookManager.DisableAll();
 
         return Result.FromSuccess();
     }
@@ -187,7 +184,7 @@ public class NostaleLocalClient : BaseNostaleClient
     {
         _synchronizer.EnqueueOperation
         (
-            () => _networkBinding.SendPacket(packetString)
+            () => _hookManager.PacketSend.WrapperFunction(packetString)
         );
         _logger.LogDebug($"Sending client packet {packetString}");
     }
@@ -196,7 +193,7 @@ public class NostaleLocalClient : BaseNostaleClient
     {
         _synchronizer.EnqueueOperation
         (
-            () => _networkBinding.ReceivePacket(packetString)
+            () => _hookManager.PacketReceive.WrapperFunction(packetString)
         );
         _logger.LogDebug($"Receiving client packet {packetString}");
     }

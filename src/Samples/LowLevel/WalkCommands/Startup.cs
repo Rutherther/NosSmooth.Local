@@ -12,6 +12,7 @@ using NosSmooth.Core.Extensions;
 using NosSmooth.Data.NOSFiles;
 using NosSmooth.Data.NOSFiles.Extensions;
 using NosSmooth.Extensions.Pathfinding.Extensions;
+using NosSmooth.Extensions.SharedBinding.Extensions;
 using NosSmooth.LocalBinding;
 using NosSmooth.LocalBinding.Extensions;
 using NosSmooth.LocalClient;
@@ -32,6 +33,7 @@ public class Startup
     {
         var collection = new ServiceCollection()
             .AddLocalClient()
+            .ShareNosSmooth()
 
             // hook pet and player walk to
             // recognize user action's and

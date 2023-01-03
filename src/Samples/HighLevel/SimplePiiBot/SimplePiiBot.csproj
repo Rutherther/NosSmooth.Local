@@ -31,6 +31,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\Extensions\NosSmooth.ChatCommands\NosSmooth.ChatCommands.csproj" />
+        <ProjectReference Include="..\..\..\Extensions\NosSmooth.Extensions.SharedBinding\NosSmooth.Extensions.SharedBinding.csproj" />
     </ItemGroup>
 
 </Project>

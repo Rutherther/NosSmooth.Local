@@ -1,17 +1,19 @@
 ﻿//
-//  UnitManagerBindingOptions.cs
+//  UnitManagerOptions.cs
 //
 //  Copyright (c) František Boháček. All rights reserved.
 //  Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using NosSmooth.LocalBinding.Hooks;
 using NosSmooth.LocalBinding.Objects;
+using NosSmooth.LocalBinding.Structs;
 
 namespace NosSmooth.LocalBinding.Options;
 
 /// <summary>
-/// Options for <see cref="UnitManagerBinding"/>.
+/// Options for <see cref="UnitManager"/>.
 /// </summary>
-public class UnitManagerBindingOptions
+public class UnitManagerOptions
 {
     /// <summary>
     /// Gets or sets the pattern to static address of unit manager.
@@ -24,10 +26,4 @@ public class UnitManagerBindingOptions
     /// </summary>
     public int[] UnitManagerOffsets { get; set; }
         = { 1, 0 };
-
-    /// <summary>
-    /// Gets or sets the configuration for entity focus function hook.
-    /// </summary>
-    public HookOptions EntityFocusHook { get; set; }
-        = new HookOptions(false, "73 00 00 00 55 8b ec b9 05 00 00 00", 4);
 }

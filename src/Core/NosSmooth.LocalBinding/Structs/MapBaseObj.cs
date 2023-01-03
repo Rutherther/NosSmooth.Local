@@ -16,13 +16,6 @@ public class MapBaseObj : NostaleObject
     /// <summary>
     /// Initializes a new instance of the <see cref="MapBaseObj"/> class.
     /// </summary>
-    public MapBaseObj()
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="MapBaseObj"/> class.
-    /// </summary>
     /// <param name="memory">The memory.</param>
     /// <param name="mapObjPointer">The map object pointer.</param>
     public MapBaseObj(IMemory memory, nuint mapObjPointer)

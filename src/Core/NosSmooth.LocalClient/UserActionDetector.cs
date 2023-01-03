@@ -5,6 +5,7 @@
 //  Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Data.SqlTypes;
+using NosSmooth.LocalBinding.Hooks;
 using NosSmooth.LocalBinding.Objects;
 using NosSmooth.LocalBinding.Structs;
 using Remora.Results;
@@ -50,6 +51,36 @@ public class UserActionDetector
     /// Execute an action that makes sure walk won't be treated as a user action.
     /// </summary>
     /// <param name="action">The action to execute.</param>
+    /// <param name="ct">The cancellation token for cancelling the operation.</param>
+    /// <returns>Return value of the action.</returns>
+    public async Task NotUserActionAsync(Action action, CancellationToken ct = default)
+    {
+        await _semaphore.WaitAsync(ct);
+        _handlingDisabled = true;
+        action();
+        _handlingDisabled = false;
+        _semaphore.Release();
+    }
+
+    /// <summary>
+    /// Execute an action that makes sure walk won't be treated as a user action.
+    /// </summary>
+    /// <param name="action">The action to execute.</param>
+    /// <returns>A result that may or may not have succeeded.</returns>
+    public Result NotUserAction(Func<Result> action)
+    {
+        _semaphore.Wait();
+        _handlingDisabled = true;
+        var result = action();
+        _handlingDisabled = false;
+        _semaphore.Release();
+        return result;
+    }
+
+    /// <summary>
+    /// Execute an action that makes sure walk won't be treated as a user action.
+    /// </summary>
+    /// <param name="action">The action to execute.</param>
     /// <typeparam name="T">The return type.</typeparam>
     /// <returns>Return value of the action.</returns>
     public T NotUserAction<T>(Func<T> action)
@@ -65,23 +96,38 @@ public class UserActionDetector
     /// <summary>
     /// Execute walk action and make sure walk won't be treated as a user action.
     /// </summary>
-    /// <param name="playerManager">The player manager.</param>
+    /// <param name="walkHook">The walk hook.</param>
     /// <param name="x">The x coordinate.</param>
     /// <param name="y">The y coordinate.</param>
-    /// <param name="ct">The cancellation token used for cancelling the operation.</param>
     /// <returns>The result of the walk.</returns>
-    public async Task<Result<bool>> NotUserWalkAsync(PlayerManagerBinding playerManager, short x, short y, CancellationToken ct = default)
-    {
-        return await NotUserActionAsync
+    public Result<bool> NotUserWalk(IPlayerWalkHook walkHook, short x, short y)
+        => NotUserAction
         (
             () =>
             {
                 _lastWalkPosition = ((ushort)x, (ushort)y);
-                return playerManager.Walk(x, y);
+                return walkHook.WrapperFunction((ushort)x, (ushort)y);
+            }
+        );
+
+    /// <summary>
+    /// Execute walk action and make sure walk won't be treated as a user action.
+    /// </summary>
+    /// <param name="walkHook">The walk hook.</param>
+    /// <param name="x">The x coordinate.</param>
+    /// <param name="y">The y coordinate.</param>
+    /// <param name="ct">The cancellation token used for cancelling the operation.</param>
+    /// <returns>The result of the walk.</returns>
+    public async Task<Result<bool>> NotUserWalkAsync(IPlayerWalkHook walkHook, short x, short y, CancellationToken ct = default)
+        => await NotUserActionAsync
+        (
+            () =>
+            {
+                _lastWalkPosition = ((ushort)x, (ushort)y);
+                return walkHook.WrapperFunction((ushort)x, (ushort)y);
             },
             ct
         );
-    }
 
     /// <summary>
     /// Checks whether the given Walk call

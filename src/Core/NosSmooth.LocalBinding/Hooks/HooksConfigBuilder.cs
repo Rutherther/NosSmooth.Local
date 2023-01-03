@@ -7,7 +7,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using NosSmooth.LocalBinding.Options;
 
-namespace NosSmooth.LocalBinding;
+namespace NosSmooth.LocalBinding.Hooks;
 
 /// <summary>
 /// Provides user-friendly builder for configuring
@@ -27,28 +27,29 @@ namespace NosSmooth.LocalBinding;
 /// </remarks>
 public class HooksConfigBuilder
 {
-    private readonly HookOptionsBuilder _packetSendHook;
-    private readonly HookOptionsBuilder _packetReceiveHook;
-    private readonly HookOptionsBuilder _playerWalkHook;
-    private readonly HookOptionsBuilder _petWalkHook;
-    private readonly HookOptionsBuilder _entityFocusHook;
-    private readonly HookOptionsBuilder _entityFollowHook;
-    private readonly HookOptionsBuilder _entityUnfollowHook;
-    private readonly HookOptionsBuilder _periodicHook;
+    private readonly HookOptionsBuilder<IPacketSendHook> _packetSendHook;
+    private readonly HookOptionsBuilder<IPacketReceiveHook> _packetReceiveHook;
+    private readonly HookOptionsBuilder<IPlayerWalkHook> _playerWalkHook;
+    private readonly HookOptionsBuilder<IPetWalkHook> _petWalkHook;
+    private readonly HookOptionsBuilder<IEntityFocusHook> _entityFocusHook;
+    private readonly HookOptionsBuilder<IEntityFollowHook> _entityFollowHook;
+    private readonly HookOptionsBuilder<IEntityUnfollowHook> _entityUnfollowHook;
+    private readonly HookOptionsBuilder<IPeriodicHook> _periodicHook;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="HooksConfigBuilder"/> class.
     /// </summary>
-    internal HooksConfigBuilder()
+    /// <param name="options">The default options to build from.</param>
+    internal HooksConfigBuilder(HookManagerOptions options)
     {
-        _playerWalkHook = new HookOptionsBuilder(new CharacterBindingOptions().WalkHook);
-        _packetSendHook = new HookOptionsBuilder(new NetworkBindingOptions().PacketSendHook);
-        _packetReceiveHook = new HookOptionsBuilder(new NetworkBindingOptions().PacketReceiveHook);
-        _petWalkHook = new HookOptionsBuilder(new PetManagerBindingOptions().PetWalkHook);
-        _entityFocusHook = new HookOptionsBuilder(new UnitManagerBindingOptions().EntityFocusHook);
-        _entityFollowHook = new HookOptionsBuilder(new CharacterBindingOptions().EntityFollowHook);
-        _entityUnfollowHook = new HookOptionsBuilder(new CharacterBindingOptions().EntityUnfollowHook);
-        _periodicHook = new HookOptionsBuilder(new PeriodicBindingOptions().PeriodicHook);
+        _packetSendHook = new HookOptionsBuilder<IPacketSendHook>(options.PacketSendHook);
+        _packetReceiveHook = new HookOptionsBuilder<IPacketReceiveHook>(options.PacketReceiveHook);
+        _playerWalkHook = new HookOptionsBuilder<IPlayerWalkHook>(options.PlayerWalkHook);
+        _petWalkHook = new HookOptionsBuilder<IPetWalkHook>(options.PetWalkHook);
+        _entityFocusHook = new HookOptionsBuilder<IEntityFocusHook>(options.EntityFocusHook);
+        _entityFollowHook = new HookOptionsBuilder<IEntityFollowHook>(options.EntityFollowHook);
+        _entityUnfollowHook = new HookOptionsBuilder<IEntityUnfollowHook>(options.EntityUnfollowHook);
+        _periodicHook = new HookOptionsBuilder<IPeriodicHook>(options.PeriodicHook);
     }
 
     /// <summary>
@@ -103,7 +104,7 @@ public class HooksConfigBuilder
     /// </summary>
     /// <param name="configure">The configuring action.</param>
     /// <returns>This builder.</returns>
-    public HooksConfigBuilder HookPeriodic(Action<HookOptionsBuilder>? configure = default)
+    public HooksConfigBuilder HookPeriodic(Action<HookOptionsBuilder<IPeriodicHook>>? configure = default)
     {
         if (configure is not null)
         {
@@ -125,7 +126,7 @@ public class HooksConfigBuilder
     /// </summary>
     /// <param name="configure">The configuring action.</param>
     /// <returns>This builder.</returns>
-    public HooksConfigBuilder HookPacketSend(Action<HookOptionsBuilder>? configure = default)
+    public HooksConfigBuilder HookPacketSend(Action<HookOptionsBuilder<IPacketSendHook>>? configure = default)
     {
         if (configure is not null)
         {
@@ -147,7 +148,7 @@ public class HooksConfigBuilder
     /// </summary>
     /// <param name="configure">The configuring action.</param>
     /// <returns>This builder.</returns>
-    public HooksConfigBuilder HookPacketReceive(Action<HookOptionsBuilder>? configure = default)
+    public HooksConfigBuilder HookPacketReceive(Action<HookOptionsBuilder<IPacketReceiveHook>>? configure = default)
     {
         if (configure is not null)
         {
@@ -169,7 +170,7 @@ public class HooksConfigBuilder
     /// </summary>
     /// <param name="configure">The configuring action.</param>
     /// <returns>This builder.</returns>
-    public HooksConfigBuilder HookPlayerWalk(Action<HookOptionsBuilder>? configure = default)
+    public HooksConfigBuilder HookPlayerWalk(Action<HookOptionsBuilder<IPlayerWalkHook>>? configure = default)
     {
         if (configure is not null)
         {
@@ -191,7 +192,7 @@ public class HooksConfigBuilder
     /// </summary>
     /// <param name="configure">The configuring action.</param>
     /// <returns>This builder.</returns>
-    public HooksConfigBuilder HookPetWalk(Action<HookOptionsBuilder>? configure = default)
+    public HooksConfigBuilder HookPetWalk(Action<HookOptionsBuilder<IPetWalkHook>>? configure = default)
     {
         if (configure is not null)
         {
@@ -213,7 +214,7 @@ public class HooksConfigBuilder
     /// </summary>
     /// <param name="configure">The configuring action.</param>
     /// <returns>This builder.</returns>
-    public HooksConfigBuilder HookEntityFocus(Action<HookOptionsBuilder>? configure = default)
+    public HooksConfigBuilder HookEntityFocus(Action<HookOptionsBuilder<IEntityFocusHook>>? configure = default)
     {
         if (configure is not null)
         {
@@ -235,7 +236,7 @@ public class HooksConfigBuilder
     /// </summary>
     /// <param name="configure">The configuring action.</param>
     /// <returns>This builder.</returns>
-    public HooksConfigBuilder HookEntityFollow(Action<HookOptionsBuilder>? configure = default)
+    public HooksConfigBuilder HookEntityFollow(Action<HookOptionsBuilder<IEntityFollowHook>>? configure = default)
     {
         if (configure is not null)
         {
@@ -257,7 +258,7 @@ public class HooksConfigBuilder
     /// </summary>
     /// <param name="configure">The configuring action.</param>
     /// <returns>This builder.</returns>
-    public HooksConfigBuilder HookEntityUnfollow(Action<HookOptionsBuilder>? configure = default)
+    public HooksConfigBuilder HookEntityUnfollow(Action<HookOptionsBuilder<IEntityUnfollowHook>>? configure = default)
     {
         if (configure is not null)
         {
@@ -278,38 +279,18 @@ public class HooksConfigBuilder
     /// <param name="serviceCollection">The service collection.</param>
     internal void Apply(IServiceCollection serviceCollection)
     {
-        serviceCollection.Configure<CharacterBindingOptions>
+        serviceCollection.Configure<HookManagerOptions>
         (
-            characterOptions =>
+            o =>
             {
-                characterOptions.WalkHook = _playerWalkHook.Build();
-                characterOptions.EntityFollowHook = _entityFollowHook.Build();
-                characterOptions.EntityUnfollowHook = _entityUnfollowHook.Build();
-            }
-        );
-
-        serviceCollection.Configure<NetworkBindingOptions>
-        (
-            characterOptions =>
-            {
-                characterOptions.PacketReceiveHook = _packetReceiveHook.Build();
-                characterOptions.PacketSendHook = _packetSendHook.Build();
-            }
-        );
-
-        serviceCollection.Configure<PetManagerBindingOptions>
-        (
-            characterOptions =>
-            {
-                characterOptions.PetWalkHook = _petWalkHook.Build();
-            }
-        );
-
-        serviceCollection.Configure<UnitManagerBindingOptions>
-        (
-            characterOptions =>
-            {
-                characterOptions.EntityFocusHook = _entityFocusHook.Build();
+                o.PeriodicHook = _periodicHook.Build();
+                o.EntityFocusHook = _entityFocusHook.Build();
+                o.EntityFollowHook = _entityFollowHook.Build();
+                o.EntityUnfollowHook = _entityUnfollowHook.Build();
+                o.PacketSendHook = _packetSendHook.Build();
+                o.PacketReceiveHook = _packetReceiveHook.Build();
+                o.PetWalkHook = _petWalkHook.Build();
+                o.PlayerWalkHook = _playerWalkHook.Build();
             }
         );
     }

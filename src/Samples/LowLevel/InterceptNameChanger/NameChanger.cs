@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NosSmooth.Core.Client;
 using NosSmooth.Core.Extensions;
+using NosSmooth.Extensions.SharedBinding.Extensions;
 using NosSmooth.LocalBinding;
 using NosSmooth.LocalClient;
 using NosSmooth.LocalClient.Extensions;
@@ -33,6 +34,7 @@ namespace InterceptNameChanger
         {
             var provider = new ServiceCollection()
                 .AddLocalClient()
+                .ShareNosSmooth()
 
                 // .AddPacketResponder<SayResponder>()
                 .AddLogging

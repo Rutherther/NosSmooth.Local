@@ -22,5 +22,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\Core\NosSmooth.LocalClient\NosSmooth.LocalClient.csproj" />
+    <ProjectReference Include="..\..\..\Extensions\NosSmooth.Extensions.SharedBinding\NosSmooth.Extensions.SharedBinding.csproj" />
   </ItemGroup>
 </Project>

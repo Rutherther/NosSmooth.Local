@@ -65,22 +65,22 @@ public class SceneManager
     /// <summary>
     /// Gets the player list.
     /// </summary>
-    public NostaleList<MapBaseObj> PlayerList => new NostaleList<MapBaseObj>(_memory, ReadPtr(Address + 0xC));
+    public NostaleList<MapBaseObj> PlayerList => new MapBaseList(_memory, ReadPtr(Address + 0xC));
 
     /// <summary>
     /// Gets the monster list.
     /// </summary>
-    public NostaleList<MapBaseObj> MonsterList => new NostaleList<MapBaseObj>(_memory, ReadPtr(Address + 0x10));
+    public NostaleList<MapBaseObj> MonsterList => new MapBaseList(_memory, ReadPtr(Address + 0x10));
 
     /// <summary>
     /// Gets the npc list.
     /// </summary>
-    public NostaleList<MapBaseObj> NpcList => new NostaleList<MapBaseObj>(_memory, ReadPtr(Address + 0x14));
+    public NostaleList<MapBaseObj> NpcList => new MapBaseList(_memory, ReadPtr(Address + 0x14));
 
     /// <summary>
     /// Gets the item list.
     /// </summary>
-    public NostaleList<MapBaseObj> ItemList => new NostaleList<MapBaseObj>(_memory, ReadPtr(Address + 0x18));
+    public NostaleList<MapBaseObj> ItemList => new MapBaseList(_memory, ReadPtr(Address + 0x18));
 
     /// <summary>
     /// Gets the entity that is currently being followed by the player.
