@@ -5,10 +5,12 @@
 //  Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Diagnostics;
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using NosSmooth.Data.NOSFiles;
 using NosSmooth.Extensions.SharedBinding.Hooks;
+using NosSmooth.Extensions.SharedBinding.Lifetime;
 using NosSmooth.LocalBinding;
 using NosSmooth.LocalBinding.Extensions;
 using NosSmooth.LocalBinding.Hooks;
@@ -94,7 +96,9 @@ public static class ServiceCollectionExtensions
     /// <returns>The same collection.</returns>
     public static IServiceCollection ShareNosSmooth(this IServiceCollection serviceCollection)
     {
+        var assembly = Assembly.GetCallingAssembly();
         return serviceCollection
+            .AddSingleton(_ => new SharedInstanceInfo(assembly.GetName().FullName, assembly.GetName().Version?.ToString(), assembly))
             .AddSingleton<SharedManager>(p => SharedManager.Instance)
             .ShareHooks()
             .TryShare<NosBrowserManager>()

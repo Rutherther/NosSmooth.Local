@@ -7,6 +7,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NosSmooth.Data.NOSFiles;
+using NosSmooth.Extensions.SharedBinding.Lifetime;
 using NosSmooth.LocalBinding;
 using NosSmooth.PacketSerializer.Packets;
 
@@ -41,7 +42,13 @@ public class SharedManager
 
     private SharedManager()
     {
+        Lifetime = new SharedLifetime();
     }
+
+    /// <summary>
+    /// Gets the shared lifetime.
+    /// </summary>
+    public SharedLifetime Lifetime { get; }
 
     /// <summary>
     /// Get shared equivalent of the given type.
@@ -53,6 +60,7 @@ public class SharedManager
     public T GetShared<T>(IServiceProvider services)
         where T : class
     {
+        Lifetime.ForceInitialize(services.GetRequiredService<SharedInstanceInfo>());
         if (!_sharedData.ContainsKey(typeof(T)))
         {
             _sharedData[typeof(T)] = CreateShared<T>(services);
