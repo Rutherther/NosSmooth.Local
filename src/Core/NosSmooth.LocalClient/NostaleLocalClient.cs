@@ -114,6 +114,9 @@ public class NostaleLocalClient : BaseNostaleClient
         _hookManager.PlayerWalk.Called -= Walk;
         _hookManager.PetWalk.Called -= PetWalk;
 
+        // the hooks are not needed anymore.
+        _hookManager.DisableAll();
+
         return Result.FromSuccess();
     }
 
