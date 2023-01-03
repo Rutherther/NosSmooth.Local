@@ -22,6 +22,7 @@ public class NosThreadSynchronizer
     private readonly ILogger<NosThreadSynchronizer> _logger;
     private readonly NosThreadSynchronizerOptions _options;
     private readonly ConcurrentQueue<SyncOperation> _queuedOperations;
+    private Thread? _nostaleThread;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NosThreadSynchronizer"/> class.
@@ -43,6 +44,11 @@ public class NosThreadSynchronizer
     }
 
     /// <summary>
+    /// Gets whether the current thread is a NosTale thread.
+    /// </summary>
+    public bool IsSynchronized => _nostaleThread == Thread.CurrentThread;
+
+    /// <summary>
     /// Start the synchronizer operation.
     /// </summary>
     public void StartSynchronizer()
@@ -60,6 +66,7 @@ public class NosThreadSynchronizer
 
     private void PeriodicCall(object? owner, System.EventArgs eventArgs)
     {
+        _nostaleThread = Thread.CurrentThread;
         var tasks = _options.MaxTasksPerIteration;
 
         while (tasks-- > 0 && _queuedOperations.TryDequeue(out var operation))
@@ -98,8 +105,15 @@ public class NosThreadSynchronizer
     /// Enqueue the given operation to execute on next frame.
     /// </summary>
     /// <param name="action">The action to execute.</param>
-    public void EnqueueOperation(Action action)
+    /// <param name="executeIfSynchronized">Whether to execute the operation instantly in case we are on the NosTale thread.</param>
+    public void EnqueueOperation(Action action, bool executeIfSynchronized = true)
     {
+        if (executeIfSynchronized && IsSynchronized)
+        { // we are synchronized, no need to wait.
+            action();
+            return;
+        }
+
         _queuedOperations.Enqueue
         (
             new SyncOperation
@@ -139,6 +153,18 @@ public class NosThreadSynchronizer
 
     private async Task<IResult> CommonSynchronizeAsync(Func<IResult> action, CancellationToken ct = default)
     {
+        if (IsSynchronized)
+        { // we are already synchronized, execute the action.
+            try
+            {
+                return action();
+            }
+            catch (Exception e)
+            {
+                return (Result)e;
+            }
+        }
+
         var linkedSource = CancellationTokenSource.CreateLinkedTokenSource(ct);
         var syncOperation = new SyncOperation(action, linkedSource);
         _queuedOperations.Enqueue(syncOperation);
