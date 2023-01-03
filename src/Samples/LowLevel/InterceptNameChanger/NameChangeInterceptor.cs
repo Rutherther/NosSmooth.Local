@@ -64,8 +64,8 @@ namespace InterceptNameChanger
         {
             if (packet.StartsWith("c_info "))
             {
-                var oldPart = packet.Substring(packet.IndexOf(' ', 7));
-                var result = _client.ReceivePacketAsync($"c_info {_name}" + oldPart)
+                var oldPart = packet.Substring(packet.IndexOf(' ', 7) + 1);
+                var result = _client.ReceivePacketAsync($"c_info {_name} " + oldPart)
                     .GetAwaiter().GetResult(); // Change the name
 
                 if (!result.IsSuccess)
