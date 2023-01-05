@@ -15,7 +15,7 @@ namespace NosSmooth.LocalBinding.Hooks.Implementations;
 internal class HookManager : IHookManager
 {
     private readonly HookManagerOptions _options;
-    private List<INostaleHook> _hooks;
+    private Dictionary<string, INostaleHook> _hooks;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="HookManager"/> class.
@@ -24,7 +24,7 @@ internal class HookManager : IHookManager
     public HookManager(IOptions<HookManagerOptions> options)
     {
         _options = options.Value;
-        _hooks = new List<INostaleHook>();
+        _hooks = new Dictionary<string, INostaleHook>();
     }
 
     /// <inheritdoc/>
@@ -52,7 +52,7 @@ internal class HookManager : IHookManager
     public IPeriodicHook Periodic => GetHook<IPeriodicHook>(IHookManager.PeriodicName);
 
     /// <inheritdoc/>
-    public IReadOnlyList<INostaleHook> Hooks => _hooks.AsReadOnly();
+    public IReadOnlyList<INostaleHook> Hooks => _hooks.Values.ToList();
 
     /// <inheritdoc/>
     public IResult Initialize(NosBindingManager bindingManager, NosBrowserManager browserManager)
@@ -91,7 +91,7 @@ internal class HookManager : IHookManager
                 var result = func();
                 if (result.IsSuccess)
                 {
-                    _hooks.Add(result.Entity);
+                    _hooks.Add(result.Entity.Name, result.Entity);
                 }
                 else
                 {
@@ -154,9 +154,7 @@ internal class HookManager : IHookManager
     private T GetHook<T>(string name)
         where T : INostaleHook
     {
-        var hook = _hooks.FirstOrDefault(x => x.Name == name);
-
-        if (hook is null || hook is not T typed)
+        if (!_hooks.ContainsKey(name) || _hooks[name] is not T typed)
         {
             throw new InvalidOperationException
                 ($"Could not load hook {name}. Did you forget to call IHookManager.Initialize?");
