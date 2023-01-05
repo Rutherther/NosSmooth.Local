@@ -5,6 +5,7 @@
 //  Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
@@ -88,6 +89,19 @@ public class NosInjector
             using var injector = new Reloaded.Injector.Injector(process);
             var memory = new ExternalMemory(process);
 
+            var netHostInjectionResult = InjectNetHostDll
+            (
+                injector,
+                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                System.IO.Path.GetDirectoryName(dllPath),
+                System.IO.Path.GetDirectoryName(process.MainModule?.FileName)
+            );
+
+            if (!netHostInjectionResult.IsSuccess)
+            {
+                return netHostInjectionResult;
+            }
+
             var directoryName = Path.GetDirectoryName(dllPath);
             if (directoryName is null)
             {
@@ -158,6 +172,30 @@ public class NosInjector
         {
             return e;
         }
+    }
+
+    private Result InjectNetHostDll(Reloaded.Injector.Injector injector, params string?[] pathsToSearch)
+    {
+        string? foundPath = pathsToSearch
+            .Select(x => Path.Join(x, "nethost.dll"))
+            .FirstOrDefault(File.Exists);
+
+        if (foundPath is null)
+        {
+            return new NotFoundError
+            (
+                "Could not find nethost.dll to inject (tried to look in executing process directory, injector directory, target process directory)"
+            );
+        }
+
+        var handle = injector.Inject(foundPath);
+
+        if (handle == 0)
+        {
+            return new InjectionFailedError(foundPath, "Only the devil knows why this happened.");
+        }
+
+        return Result.FromSuccess();
     }
 
     private ManagedMemoryAllocation AllocateString(IMemory memory, string str)
