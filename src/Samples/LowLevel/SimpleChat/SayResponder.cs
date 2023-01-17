@@ -8,6 +8,7 @@ using NosSmooth.Core.Client;
 using NosSmooth.Core.Packets;
 using NosSmooth.Packets.Enums;
 using NosSmooth.Packets.Enums.Chat;
+using NosSmooth.Packets.Enums.Entities;
 using NosSmooth.Packets.Server.Chat;
 using Remora.Results;
 

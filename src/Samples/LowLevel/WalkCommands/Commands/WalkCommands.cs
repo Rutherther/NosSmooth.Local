@@ -12,6 +12,7 @@ using NosSmooth.Core.Extensions;
 using NosSmooth.Extensions.Pathfinding;
 using NosSmooth.Packets.Enums;
 using NosSmooth.Packets.Enums.Chat;
+using NosSmooth.Packets.Enums.Entities;
 using NosSmooth.Packets.Server.Chat;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
@@ -70,7 +71,7 @@ public class WalkCommands : CommandGroup
             return receiveResult;
         }
 
-        var command = new WalkCommand(x, y, petSelectors, 2, AllowUserCancel: isCancellable);
+        var command = new WalkCommand(x, y, null, 2, AllowUserCancel: isCancellable);
         var walkResult = await _client.SendCommandAsync(command, CancellationToken);
         if (!walkResult.IsSuccess)
         {
@@ -120,7 +121,7 @@ public class WalkCommands : CommandGroup
             return receiveResult;
         }
 
-        var walkResult = await _walkManager.GoToAsync(x, y, isCancellable, CancellationToken, petSelectors);
+        var walkResult = await _walkManager.GoToAsync(x, y, isCancellable, CancellationToken);
         if (!walkResult.IsSuccess)
         {
             await _feedbackService.SendErrorMessageAsync

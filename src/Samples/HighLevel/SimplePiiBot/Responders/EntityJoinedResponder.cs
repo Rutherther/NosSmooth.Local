@@ -9,6 +9,7 @@ using NosSmooth.Game.Data.Entities;
 using NosSmooth.Game.Events.Core;
 using NosSmooth.Game.Events.Entities;
 using NosSmooth.Packets.Enums;
+using NosSmooth.Packets.Enums.Players;
 using Remora.Results;
 
 namespace SimplePiiBot.Responders;

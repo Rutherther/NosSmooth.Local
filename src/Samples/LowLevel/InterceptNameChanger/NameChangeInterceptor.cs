@@ -10,6 +10,7 @@ using NosSmooth.Core.Client;
 using NosSmooth.LocalClient;
 using NosSmooth.Packets.Enums;
 using NosSmooth.Packets.Enums.Chat;
+using NosSmooth.Packets.Enums.Entities;
 using NosSmooth.Packets.Server.Chat;
 
 namespace InterceptNameChanger
