@@ -233,7 +233,7 @@ public class NostaleLocalClient : BaseNostaleClient
 
             if (!result.IsSuccess)
             {
-                _logger.LogError("There was an error whilst handling packet");
+                _logger.LogError("There was an error whilst handling packet {packetString}", packetString);
                 _logger.LogResultError(result);
             }
         }
