@@ -49,8 +49,13 @@ public class SharedHookManager
     {
         if (!_initialized)
         {
-            _underlyingManager.Initialize(bindingManager, browserManager);
+            var result = _underlyingManager.Initialize(bindingManager, browserManager);
             _initialized = true;
+
+            if (!result.IsSuccess)
+            {
+                return Result<Dictionary<string, INostaleHook>>.FromError(result.Error);
+            }
         }
 
         var hooks = new Dictionary<string, INostaleHook>();
