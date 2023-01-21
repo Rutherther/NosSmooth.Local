@@ -5,6 +5,7 @@
         <Nullable>enable</Nullable>
         <LangVersion>10</LangVersion>
         <TargetFrameworks>net7.0</TargetFrameworks>
+        <VersionPrefix>1.0.0</VersionPrefix>
     </PropertyGroup>
 
     <ItemGroup>
