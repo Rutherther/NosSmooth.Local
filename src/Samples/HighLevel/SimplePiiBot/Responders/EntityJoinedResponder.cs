@@ -5,6 +5,7 @@
 //  Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using NosSmooth.Game.Apis;
+using NosSmooth.Game.Apis.Safe;
 using NosSmooth.Game.Data.Entities;
 using NosSmooth.Game.Events.Core;
 using NosSmooth.Game.Events.Entities;
@@ -20,14 +21,14 @@ namespace SimplePiiBot.Responders;
 public class EntityJoinedResponder : IGameResponder<EntityJoinedMapEvent>
 {
     private readonly Bot _bot;
-    private readonly NostaleChatPacketApi _chatApi;
+    private readonly NostaleChatApi _chatApi;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="EntityJoinedResponder"/> class.
     /// </summary>
     /// <param name="bot">The bot.</param>
     /// <param name="chatApi">The chat packet api.</param>
-    public EntityJoinedResponder(Bot bot, NostaleChatPacketApi chatApi)
+    public EntityJoinedResponder(Bot bot, NostaleChatApi chatApi)
     {
         _bot = bot;
         _chatApi = chatApi;

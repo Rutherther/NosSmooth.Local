@@ -13,6 +13,7 @@ using NosSmooth.Extensions.Combat.Techniques;
 using NosSmooth.Extensions.Pathfinding;
 using NosSmooth.Game;
 using NosSmooth.Game.Apis;
+using NosSmooth.Game.Apis.Safe;
 using NosSmooth.Game.Data.Characters;
 using NosSmooth.Game.Data.Entities;
 using NosSmooth.Game.Data.Info;
@@ -31,7 +32,8 @@ public class Bot : IStatefulEntity
     private static readonly long RangeSquared = 15 * 15;
     private static readonly long MaxPiiCount = 15;
 
-    private readonly NostaleChatPacketApi _chatPacketApi;
+    private readonly NostaleChatApi _chatPacketApi;
+    private readonly NostaleSkillsApi _skillsApi;
     private readonly CombatManager _combatManager;
     private readonly Game _game;
     private readonly WalkManager _walkManager;
@@ -42,13 +44,15 @@ public class Bot : IStatefulEntity
     /// Initializes a new instance of the <see cref="Bot"/> class.
     /// </summary>
     /// <param name="chatPacketApi">The chat packet api.</param>
+    /// <param name="skillsApi">The skills api.</param>
     /// <param name="combatManager">The combat manager.</param>
     /// <param name="game">The game.</param>
     /// <param name="walkManager">The walk manager.</param>
     /// <param name="logger">The logger.</param>
     public Bot
     (
-        NostaleChatPacketApi chatPacketApi,
+        NostaleChatApi chatPacketApi,
+        NostaleSkillsApi skillsApi,
         CombatManager combatManager,
         Game game,
         WalkManager walkManager,
@@ -56,6 +60,7 @@ public class Bot : IStatefulEntity
     )
     {
         _chatPacketApi = chatPacketApi;
+        _skillsApi = skillsApi;
         _combatManager = combatManager;
         _game = game;
         _walkManager = walkManager;
@@ -130,8 +135,17 @@ public class Bot : IStatefulEntity
                 new SimpleAttackTechnique
                 (
                     entity.Id,
+                    _skillsApi,
                     _walkManager,
-                    new SkillSelector(Piis.Contains(entity.VNum))
+                    new SkillSelector(Piis.Contains(entity.VNum)),
+                    new UseItemPolicy
+                    (
+                        false,
+                        0,
+                        0,
+                        Array.Empty<int>(),
+                        Array.Empty<int>()
+                    )
                 ),
                 ct
             );
@@ -192,21 +206,22 @@ public class Bot : IStatefulEntity
     public async Task<Result> StopAsync(CancellationToken ct = default)
     {
         var startCt = _startCt;
-        var messageResult = await _chatPacketApi.ReceiveSystemMessageAsync("Stopping the bot.", ct: ct);
-        if (startCt is not null)
+        try
         {
-            try
+            var messageResult = await _chatPacketApi.ReceiveSystemMessageAsync("Stopping the bot.", ct: ct);
+            if (startCt is not null)
             {
                 startCt.Cancel();
+                startCt.Dispose();
             }
-            catch
-            {
-                // ignored
-            }
-            startCt.Dispose();
-        }
-        _startCt = null;
+            _startCt = null;
 
-        return messageResult;
+            return messageResult;
+        }
+        catch (Exception e)
+        {
+            // ignored
+            return e;
+        }
     }
 }
