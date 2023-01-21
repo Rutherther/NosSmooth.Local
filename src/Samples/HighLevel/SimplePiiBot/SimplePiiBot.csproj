@@ -12,7 +12,7 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.0" />
         <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0" />
-        <PackageReference Include="NosSmooth.Extensions.Combat" Version="1.1.0" />
+        <PackageReference Include="NosSmooth.Extensions.Combat" Version="1.2.0" />
         <PackageReference Include="Remora.Commands" Version="10.0.3" />
         <PackageReference Include="Remora.Results" Version="7.2.3" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection">
