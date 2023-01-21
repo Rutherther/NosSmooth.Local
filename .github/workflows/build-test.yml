@@ -25,13 +25,13 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
-      run: dotnet build --no-restore --version-suffix "main$GITHUB_RUN_ID"
+      run: dotnet build NosSmooth.Local.NoInject.sln --no-restore --version-suffix "main$GITHUB_RUN_ID"
     - name: Test
       run: dotnet test --no-build --verbosity normal
 
     - name: Pack app
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: dotnet pack -c Release --no-restore --version-suffix "main$GITHUB_RUN_ID" -o nuget
+      run: dotnet pack NosSmooth.Local.NoInject.sln -c Release --no-restore --version-suffix "main$GITHUB_RUN_ID" -o nuget
 
     - name: Publish NuGet on MyGet
       working-directory: nuget
