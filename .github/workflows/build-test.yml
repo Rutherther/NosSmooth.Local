@@ -23,11 +23,11 @@ jobs:
           6.0.x
           7.0.x
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore NosSmooth.Local.NoInject.sln
     - name: Build
       run: dotnet build NosSmooth.Local.NoInject.sln --no-restore --version-suffix "main$GITHUB_RUN_ID"
     - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test NosSmooth.Local.NoInject.sln --no-build --verbosity normal
 
     - name: Pack app
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
