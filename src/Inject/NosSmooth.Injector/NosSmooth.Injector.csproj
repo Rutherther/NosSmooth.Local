@@ -2,16 +2,21 @@
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb;.dll</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <VersionPrefix>1.0.1</VersionPrefix>
+    <VersionPrefix>1.0.2</VersionPrefix>
     <PackageReleaseNotes>Support relative path when injecting. Inluce NosSmooth.Inject.dll in package and copy it to output.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Options" Version="7.0.0" />
-    <PackageReference Include="Reloaded.Injector" Version="1.2.5" />
     <PackageReference Include="Remora.Results" Version="7.2.3" />
+
+    <PackageReference Include="Reloaded.Injector" Version="1.2.5">
+      <IncludeAssets>All</IncludeAssets>
+      <PrivateAssets>None</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
