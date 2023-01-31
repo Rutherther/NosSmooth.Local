@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <VersionPrefix>1.0.1</VersionPrefix>
-    <PackageReleaseNotes>Support relative path when injecting.</PackageReleaseNotes>
+    <PackageReleaseNotes>Support relative path when injecting. Inluce NosSmooth.Inject.dll in package and copy it to output.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
