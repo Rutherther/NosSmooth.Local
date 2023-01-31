@@ -15,9 +15,14 @@
         <RepositoryUrl>https://github.com/Rutherther/NosSmooth.Local</RepositoryUrl>
         <RepositoryBranch>main</RepositoryBranch>
         <PackageProjectUrl>https://github.com/Rutherther/NosSmooth.Local</PackageProjectUrl>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
     </PropertyGroup>
-    
+
     <ItemGroup>
+        <None Include="$(MSBuildThisFileDirectory)README.md">
+            <Pack>true</Pack>
+        </None>
         <None Include="$(MSBuildThisFileDirectory)LICENSE">
             <Pack>true</Pack>
             <PackagePath></PackagePath>
