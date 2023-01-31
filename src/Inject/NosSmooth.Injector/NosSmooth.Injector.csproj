@@ -5,7 +5,7 @@
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb;.dll</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <VersionPrefix>1.0.2</VersionPrefix>
+    <VersionPrefix>1.0.3</VersionPrefix>
     <PackageReleaseNotes>Support relative path when injecting. Inluce NosSmooth.Inject.dll in package and copy it to output.</PackageReleaseNotes>
   </PropertyGroup>
 
@@ -20,8 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="NosSmooth.Inject.dll" Pack="true" PackagePath="build">
+    <Content Include="NosSmooth.Inject.dll" Pack="true" PackageCopyToOutput="true">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    </Content>
   </ItemGroup>
 </Project>
