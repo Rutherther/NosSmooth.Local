@@ -81,6 +81,7 @@ public class NosInjector
     {
         try
         {
+            dllPath = Path.GetFullPath(dllPath);
             if (!File.Exists(dllPath))
             {
                 return new NotFoundError($"Could not find the managed dll file at \"{dllPath}\".");
