@@ -14,4 +14,9 @@
     <PackageReference Include="Remora.Results" Version="7.2.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="NosSmooth.Inject.dll" Pack="true" PackagePath="build">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
