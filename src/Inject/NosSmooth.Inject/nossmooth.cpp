@@ -105,13 +105,15 @@ int LoadAndCallMethod(LoadParams* params)
 {
     if (!load_hostfxr())
     {
-        assert(false && "Failure: load_hostfxr()");
-        return 0;
+        return 2;
     }
 
     load_assembly_and_get_function_pointer_fn load_assembly_and_get_function_pointer = nullptr;
     load_assembly_and_get_function_pointer = get_dotnet_load_assembly(params->runtimeConfigPath);
-    assert(load_assembly_and_get_function_pointer != nullptr && "Failure: get_dotnet_load_assembly()");
+    if (load_assembly_and_get_function_pointer == nullptr)
+    {
+        return 3;
+    }
 
     typedef void (CORECLR_DELEGATE_CALLTYPE* main_entry_point_fn)();
     main_entry_point_fn main = nullptr;
@@ -122,7 +124,11 @@ int LoadAndCallMethod(LoadParams* params)
         UNMANAGEDCALLERSONLY_METHOD,
         nullptr,
         (void**)&main);
-    assert(rc == 0 && main != nullptr && "Failure: load_assembly_and_get_function_pointer()");
+    if (rc != 0 || main == nullptr)
+    {
+        return 4;
+    }
+
     main();
     return 1;
 }

@@ -150,12 +150,16 @@ public class NosInjector
             }
 
             var functionResult = injector.CallFunction(nosSmoothInjectPath, "LoadAndCallMethod", loadParams);
+
+            injector.Eject(nosSmoothInjectPath);
+
             if (functionResult != 1)
             {
                 return new InjectionFailedError
                 (
                     dllPath,
-                    $"Couldn't initialize the nethost or call the main function, did you specify the class and method correctly? Result: {functionResult}"
+                    $"Couldn't initialize the nethost or call the main function, did you specify the class and method correctly? Result: {functionResult}",
+                    (InjectionResult)functionResult
                 );
             }
 
