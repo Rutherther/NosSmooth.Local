@@ -4,8 +4,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>10</LangVersion>
-        <TargetFrameworks>net7.0</TargetFrameworks>
-        <VersionPrefix>1.0.0</VersionPrefix>
+        <TargetFramework>net7.0</TargetFramework>
+        <VersionPrefix>1.1.0</VersionPrefix>
+        <PackageReleaseNotes>Update to NosSmooth.Core with splitted raw and managed clients.</PackageReleaseNotes>
     </PropertyGroup>
 
     <ItemGroup>
@@ -13,7 +14,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="NosSmooth.Core" Version="3.3.1" />
+      <PackageReference Include="NosSmooth.Core" Version="4.0.0" />
       <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
       <PackageReference Include="Reloaded.Hooks" Version="4.2.1" />
       <PackageReference Include="Reloaded.Memory.Sigscan" Version="3.1.6" />

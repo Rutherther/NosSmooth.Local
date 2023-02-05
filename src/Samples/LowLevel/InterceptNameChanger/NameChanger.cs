@@ -35,6 +35,7 @@ namespace InterceptNameChanger
         {
             var provider = new ServiceCollection()
                 .AddLocalClient()
+                .AddManagedNostaleCore()
                 .ShareNosSmooth()
 
                 // .AddPacketResponder<SayResponder>()
@@ -70,7 +71,7 @@ namespace InterceptNameChanger
                 logger.LogResultError(packetAddResult);
             }
 
-            var client = provider.GetRequiredService<INostaleClient>();
+            var client = provider.GetRequiredService<ManagedNostaleClient>();
 
             var sayResult = await client.ReceivePacketAsync
             (

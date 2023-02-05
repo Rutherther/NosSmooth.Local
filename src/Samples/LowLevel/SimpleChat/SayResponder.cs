@@ -19,13 +19,13 @@ namespace SimpleChat;
 /// </summary>
 public class SayResponder : IPacketResponder<SayPacket>, IPacketResponder<MsgPacket>
 {
-    private readonly INostaleClient _client;
+    private readonly ManagedNostaleClient _client;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SayResponder"/> class.
     /// </summary>
     /// <param name="client">The nostale client.</param>
-    public SayResponder(INostaleClient client)
+    public SayResponder(ManagedNostaleClient client)
     {
         _client = client;
     }

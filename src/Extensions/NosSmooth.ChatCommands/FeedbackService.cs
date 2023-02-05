@@ -18,13 +18,13 @@ namespace NosSmooth.ChatCommands;
 /// </summary>
 public class FeedbackService
 {
-    private readonly INostaleClient _client;
+    private readonly ManagedNostaleClient _client;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedbackService"/> class.
     /// </summary>
     /// <param name="client">The nostale client.</param>
-    public FeedbackService(INostaleClient client)
+    public FeedbackService(ManagedNostaleClient client)
     {
         _client = client;
 

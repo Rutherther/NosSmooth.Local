@@ -20,7 +20,7 @@ namespace InterceptNameChanger
     /// </summary>
     public class NameChangeInterceptor : IPacketInterceptor
     {
-        private readonly INostaleClient _client;
+        private readonly ManagedNostaleClient _client;
         private readonly ILogger<NameChangeInterceptor> _logger;
         private string _name = "Intercept";
 
@@ -29,7 +29,7 @@ namespace InterceptNameChanger
         /// </summary>
         /// <param name="client">The nostale client.</param>
         /// <param name="logger">The logger.</param>
-        public NameChangeInterceptor(INostaleClient client, ILogger<NameChangeInterceptor> logger)
+        public NameChangeInterceptor(ManagedNostaleClient client, ILogger<NameChangeInterceptor> logger)
         {
             _client = client;
             _logger = logger;

@@ -22,6 +22,7 @@ using NosSmooth.PacketSerializer;
 using NosSmooth.PacketSerializer.Abstractions.Attributes;
 using NosSmooth.PacketSerializer.Errors;
 using Remora.Results;
+using PacketEventArgs = NosSmooth.LocalBinding.EventArgs.PacketEventArgs;
 
 namespace NosSmooth.LocalClient;
 
@@ -37,8 +38,7 @@ public class NostaleLocalClient : BaseNostaleClient
     private readonly NosThreadSynchronizer _synchronizer;
     private readonly IHookManager _hookManager;
     private readonly ControlCommands _controlCommands;
-    private readonly IPacketSerializer _packetSerializer;
-    private readonly PacketHandler _packetHandler;
+    private readonly IPacketHandler _packetHandler;
     private readonly UserActionDetector _userActionDetector;
     private readonly ILogger _logger;
     private readonly IServiceProvider _provider;
@@ -53,7 +53,6 @@ public class NostaleLocalClient : BaseNostaleClient
     /// <param name="hookManager">The hook manager.</param>
     /// <param name="controlCommands">The control commands.</param>
     /// <param name="commandProcessor">The command processor.</param>
-    /// <param name="packetSerializer">The packet serializer.</param>
     /// <param name="packetHandler">The packet handler.</param>
     /// <param name="userActionDetector">The user action detector.</param>
     /// <param name="logger">The logger.</param>
@@ -65,20 +64,18 @@ public class NostaleLocalClient : BaseNostaleClient
         IHookManager hookManager,
         ControlCommands controlCommands,
         CommandProcessor commandProcessor,
-        IPacketSerializer packetSerializer,
-        PacketHandler packetHandler,
+        IPacketHandler packetHandler,
         UserActionDetector userActionDetector,
         ILogger<NostaleLocalClient> logger,
         IOptions<LocalClientOptions> options,
         IServiceProvider provider
     )
-        : base(commandProcessor, packetSerializer)
+        : base(commandProcessor)
     {
         _options = options.Value;
         _synchronizer = synchronizer;
         _hookManager = hookManager;
         _controlCommands = controlCommands;
-        _packetSerializer = packetSerializer;
         _packetHandler = packetHandler;
         _userActionDetector = userActionDetector;
         _logger = logger;
@@ -202,34 +199,7 @@ public class NostaleLocalClient : BaseNostaleClient
     {
         try
         {
-            var packetResult = _packetSerializer.Deserialize(packetString, type);
-            IPacket packet;
-            if (!packetResult.IsSuccess)
-            {
-                if (packetResult.Error is not PacketConverterNotFoundError)
-                {
-                    _logger.LogWarning("Could not parse {Packet}. Reason:", packetString);
-                    _logger.LogResultError(packetResult);
-                    packet = new ParsingFailedPacket(packetResult, packetString);
-                }
-                else
-                {
-                    packet = new UnresolvedPacket(packetString.Split(' ')[0], packetString);
-                }
-            }
-            else
-            {
-                packet = packetResult.Entity;
-            }
-
-            Result result = await _packetHandler.HandlePacketAsync
-            (
-                this,
-                type,
-                packet,
-                packetString,
-                _stopRequested ?? default
-            );
+            var result = await _packetHandler.HandlePacketAsync(this, type, packetString);
 
             if (!result.IsSuccess)
             {

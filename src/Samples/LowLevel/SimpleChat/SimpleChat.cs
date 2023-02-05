@@ -33,6 +33,7 @@ public class SimpleChat
     {
         var provider = new ServiceCollection()
             .AddLocalClient()
+            .AddManagedNostaleCore()
             .ShareNosSmooth()
             .AddPacketResponder<SayResponder>()
             .AddLogging
@@ -65,7 +66,7 @@ public class SimpleChat
             logger.LogResultError(packetAddResult);
         }
 
-        var client = provider.GetRequiredService<INostaleClient>();
+        var client = provider.GetRequiredService<ManagedNostaleClient>();
 
         await client.ReceivePacketAsync
         (

@@ -25,7 +25,7 @@ namespace WalkCommands.Commands;
 /// </summary>
 public class WalkCommands : CommandGroup
 {
-    private readonly INostaleClient _client;
+    private readonly ManagedNostaleClient _client;
     private readonly WalkManager _walkManager;
     private readonly FeedbackService _feedbackService;
 
@@ -35,7 +35,7 @@ public class WalkCommands : CommandGroup
     /// <param name="client">The nostale client.</param>
     /// <param name="walkManager">The walk manager.</param>
     /// <param name="feedbackService">The feedback service.</param>
-    public WalkCommands(INostaleClient client, WalkManager walkManager, FeedbackService feedbackService)
+    public WalkCommands(ManagedNostaleClient client, WalkManager walkManager, FeedbackService feedbackService)
     {
         _client = client;
         _walkManager = walkManager;

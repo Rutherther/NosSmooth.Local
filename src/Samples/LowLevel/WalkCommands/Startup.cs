@@ -34,6 +34,7 @@ public class Startup
     {
         var collection = new ServiceCollection()
             .AddLocalClient()
+            .AddManagedNostaleCore()
             .ShareNosSmooth()
 
             // hook pet and player walk to
