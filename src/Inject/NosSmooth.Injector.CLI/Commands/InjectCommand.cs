@@ -62,7 +62,7 @@ namespace NosSmooth.Injector.CLI.Commands
 
             var dllName = Path.GetFileNameWithoutExtension(dllPath);
             return Task.FromResult
-                (_injector.Inject(processId, dllPath, $"{dllName}.DllMain, {dllName}", methodName ?? "Main"));
+                (_injector.Inject(processId, dllPath, typeName ?? $"{dllName}.DllMain, {dllName}", methodName ?? "Main"));
         }
     }
 }
