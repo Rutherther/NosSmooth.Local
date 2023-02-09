@@ -22,6 +22,7 @@ public interface IPetWalkHook : INostaleHook<IPetWalkHook.PetWalkDelegate, IPetW
     /// <param name="position">The position to walk to. First 4 bits are x (most significant), next 4 bits are y.</param>
     /// <param name="unknown0">Unknown 1. TODO.</param>
     /// <param name="unknown1">Unknown 2. TODO.</param>
+    /// <param name="unknown2">Unknown 3. TODO.</param>
     /// <returns>1 to proceed to NosTale function, 0 to block the call.</returns>
     [Function
     (
@@ -30,7 +31,7 @@ public interface IPetWalkHook : INostaleHook<IPetWalkHook.PetWalkDelegate, IPetW
         FunctionAttribute.StackCleanup.Callee,
         new[] { FunctionAttribute.Register.ebx, FunctionAttribute.Register.esi, FunctionAttribute.Register.edi, FunctionAttribute.Register.ebp }
     )]
-    public delegate nuint PetWalkDelegate(nuint petManagerPtr, int position, short unknown0 = 0, int unknown1 = 1);
+    public delegate nuint PetWalkDelegate(nuint petManagerPtr, int position, short unknown0 = 0, int unknown1 = 1, int unknown2 = 1);
 
     /// <summary>
     /// Pet walk function.

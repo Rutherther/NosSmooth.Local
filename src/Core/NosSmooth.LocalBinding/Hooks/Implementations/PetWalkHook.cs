@@ -58,11 +58,12 @@ internal class PetWalkHook : CancelableNostaleHook<IPetWalkHook.PetWalkDelegate,
                 petManagerPtr,
                 position,
                 un0,
-                un1
+                un1,
+                un2
             ) =>
             {
                 CallingFromNosSmooth = true;
-                var res = function(petManagerPtr, position, un0, un1);
+                var res = function(petManagerPtr, position, un0, un1, un2);
                 CallingFromNosSmooth = false;
                 return res;
             };
@@ -72,7 +73,8 @@ internal class PetWalkHook : CancelableNostaleHook<IPetWalkHook.PetWalkDelegate,
         nuint petManagerPtr,
         int position,
         short un0,
-        int un1
+        int un1,
+        int un2
     )
     {
         var petManager = new PetManager(_memory, petManagerPtr);
