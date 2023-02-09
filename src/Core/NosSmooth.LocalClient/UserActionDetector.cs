@@ -162,11 +162,12 @@ public class UserActionDetector
     /// <returns>Whether the action is a user action.</returns>
     public bool IsPetWalkUserOperation(PetManager petManager, ushort x, ushort y)
     {
-        if (_handlingDisabled)
+        return false; // TODO: implement user action detection for petwalk
+        /*if (_handlingDisabled)
         {
             return false;
         }
 
-        return true;
+        return true;*/
     }
 }
