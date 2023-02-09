@@ -5,8 +5,8 @@
         <Nullable>enable</Nullable>
         <LangVersion>10</LangVersion>
         <TargetFramework>net7.0</TargetFramework>
-        <VersionPrefix>1.1.0</VersionPrefix>
-        <PackageReleaseNotes>Update to NosSmooth.Core with splitted raw and managed clients.</PackageReleaseNotes>
+        <VersionPrefix>1.1.1</VersionPrefix>
+        <PackageReleaseNotes>Update binding. Temporarily disable user action detection from pet walk.</PackageReleaseNotes>
     </PropertyGroup>
 
     <ItemGroup>
