@@ -71,7 +71,14 @@ public class WalkCommands : CommandGroup
             return receiveResult;
         }
 
-        var command = new WalkCommand(x, y, null, 2, AllowUserCancel: isCancellable);
+        var command = new WalkCommand
+        (
+            x,
+            y,
+            petSelectors.Select(i => (i, x, y)).ToArray(),
+            2,
+            AllowUserCancel: isCancellable
+        );
         var walkResult = await _client.SendCommandAsync(command, CancellationToken);
         if (!walkResult.IsSuccess)
         {
@@ -121,7 +128,14 @@ public class WalkCommands : CommandGroup
             return receiveResult;
         }
 
-        var walkResult = await _walkManager.GoToAsync(x, y, isCancellable, CancellationToken);
+        var walkResult = await _walkManager.GoToAsync
+        (
+            x,
+            y,
+            isCancellable,
+            CancellationToken,
+            petSelectors.Select(i => (i, x, y)).ToArray()
+        );
         if (!walkResult.IsSuccess)
         {
             await _feedbackService.SendErrorMessageAsync
