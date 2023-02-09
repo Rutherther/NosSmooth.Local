@@ -9,7 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="NosSmooth.Core" Version="4.0.0" />
+      <PackageReference Include="NosSmooth.Core" Version="4.0.2" />
       <PackageReference Include="NosSmooth.Data.NOSFiles" Version="2.2.2" />
       <PackageReference Include="NosSmooth.PacketSerializer" Version="2.2.6" />
     </ItemGroup>

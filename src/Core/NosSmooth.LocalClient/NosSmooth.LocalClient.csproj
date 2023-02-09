@@ -14,7 +14,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="NosSmooth.Core" Version="4.0.0" />
+      <PackageReference Include="NosSmooth.Core" Version="4.0.2" />
       <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
       <PackageReference Include="Reloaded.Hooks" Version="4.2.1" />
       <PackageReference Include="Reloaded.Memory.Sigscan" Version="3.1.6" />
