@@ -5,8 +5,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>10</LangVersion>
-        <VersionPrefix>1.0.1</VersionPrefix>
-        <PackageReleaseNotes>Fix PetWalk arguments, one argument on stack was missing and causing an exception.</PackageReleaseNotes>
+        <VersionPrefix>1.1.0</VersionPrefix>
+        <PackageReleaseNotes>Add NtClient and EncryptionKey.</PackageReleaseNotes>
     </PropertyGroup>
 
     <ItemGroup>
