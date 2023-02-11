@@ -23,12 +23,6 @@ public class Program
     /// <param name="arguments">The arguments.</param>
     public static void Main(string[] arguments)
     {
-        var playerManagerOptions = new PlayerManagerOptions();
-        var sceneManagerOptions = new SceneManagerOptions();
-        var petManagerOptions = new PetManagerOptions();
-        var networkManagerOptions = new NetworkManagerOptions();
-        var unitManagerOptions = new UnitManagerOptions();
-
         foreach (var argument in arguments)
         {
             Process[] processes;
@@ -47,15 +41,7 @@ public class Program
 
             foreach (var process in processes)
             {
-                var externalBrowser = new NosBrowserManager
-                (
-                    process,
-                    playerManagerOptions,
-                    sceneManagerOptions,
-                    petManagerOptions,
-                    networkManagerOptions,
-                    unitManagerOptions
-                );
+                var externalBrowser = new NosBrowserManager(process);
 
                 if (!externalBrowser.IsNostaleProcess)
                 {

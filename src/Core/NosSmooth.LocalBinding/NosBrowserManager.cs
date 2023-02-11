@@ -110,20 +110,20 @@ public class NosBrowserManager
     public NosBrowserManager
     (
         Process process,
-        PlayerManagerOptions playerManagerOptions,
-        SceneManagerOptions sceneManagerOptions,
-        PetManagerOptions petManagerOptions,
-        NetworkManagerOptions networkManagerOptions,
-        UnitManagerOptions unitManagerOptions,
-        NtClientOptions ntClientOptions
+        PlayerManagerOptions? playerManagerOptions = default,
+        SceneManagerOptions? sceneManagerOptions = default,
+        PetManagerOptions? petManagerOptions = default,
+        NetworkManagerOptions? networkManagerOptions = default,
+        UnitManagerOptions? unitManagerOptions = default,
+        NtClientOptions? ntClientOptions = default
     )
     {
-        _playerManagerOptions = playerManagerOptions;
-        _sceneManagerOptions = sceneManagerOptions;
-        _petManagerOptions = petManagerOptions;
-        _networkManagerOptions = networkManagerOptions;
-        _unitManagerOptions = unitManagerOptions;
-        _ntClientOptions = ntClientOptions;
+        _playerManagerOptions = playerManagerOptions ?? new PlayerManagerOptions();
+        _sceneManagerOptions = sceneManagerOptions ?? new SceneManagerOptions();
+        _petManagerOptions = petManagerOptions ?? new PetManagerOptions();
+        _networkManagerOptions = networkManagerOptions ?? new NetworkManagerOptions();
+        _unitManagerOptions = unitManagerOptions ?? new UnitManagerOptions();
+        _ntClientOptions = ntClientOptions ?? new NtClientOptions();
         Process = process;
         Memory = Process.Id == Process.GetCurrentProcess().Id ? new Memory() : new ExternalMemory(process);
         Scanner = new Scanner(process, process.MainModule);
