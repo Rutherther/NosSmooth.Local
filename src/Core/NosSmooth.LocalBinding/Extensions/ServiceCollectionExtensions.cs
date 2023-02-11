@@ -53,6 +53,7 @@ public static class ServiceCollectionExtensions
             .AddSingleton(p => p.GetRequiredService<NosBrowserManager>().PlayerManager)
             .AddSingleton(p => p.GetRequiredService<NosBrowserManager>().NetworkManager)
             .AddSingleton(p => p.GetRequiredService<NosBrowserManager>().UnitManager)
+            .AddSingleton(p => p.GetRequiredService<NosBrowserManager>().NtClient)
             .AddSingleton(p => p.GetRequiredService<IHookManager>().PacketReceive)
             .AddSingleton(p => p.GetRequiredService<IHookManager>().PacketSend)
             .AddSingleton(p => p.GetRequiredService<IHookManager>().PlayerWalk)

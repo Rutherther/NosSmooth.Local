@@ -58,11 +58,13 @@ public class NosBrowserManager
     private readonly PetManagerOptions _petManagerOptions;
     private readonly NetworkManagerOptions _networkManagerOptions;
     private readonly UnitManagerOptions _unitManagerOptions;
+    private readonly NtClientOptions _ntClientOptions;
     private PlayerManager? _playerManager;
     private SceneManager? _sceneManager;
     private PetManagerList? _petManagerList;
     private NetworkManager? _networkManager;
     private UnitManager? _unitManager;
+    private NtClient? _ntClient;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NosBrowserManager"/> class.
@@ -72,13 +74,15 @@ public class NosBrowserManager
     /// <param name="petManagerOptions">The pet manager options.</param>
     /// <param name="networkManagerOptions">The network manager options.</param>
     /// <param name="unitManagerOptions">The unit manager options.</param>
+    /// <param name="ntClientOptions">The nt client options.</param>
     public NosBrowserManager
     (
-        IOptions<PlayerManagerOptions> playerManagerOptions,
-        IOptions<SceneManagerOptions> sceneManagerOptions,
-        IOptions<PetManagerOptions> petManagerOptions,
-        IOptions<NetworkManagerOptions> networkManagerOptions,
-        IOptions<UnitManagerOptions> unitManagerOptions
+        IOptionsSnapshot<PlayerManagerOptions> playerManagerOptions,
+        IOptionsSnapshot<SceneManagerOptions> sceneManagerOptions,
+        IOptionsSnapshot<PetManagerOptions> petManagerOptions,
+        IOptionsSnapshot<NetworkManagerOptions> networkManagerOptions,
+        IOptionsSnapshot<UnitManagerOptions> unitManagerOptions,
+        IOptionsSnapshot<NtClientOptions> ntClientOptions
     )
         : this
         (
@@ -87,7 +91,8 @@ public class NosBrowserManager
             sceneManagerOptions.Value,
             petManagerOptions.Value,
             networkManagerOptions.Value,
-            unitManagerOptions.Value
+            unitManagerOptions.Value,
+            ntClientOptions.Value
         )
     {
     }
@@ -101,6 +106,7 @@ public class NosBrowserManager
     /// <param name="petManagerOptions">The pet manager options.</param>
     /// <param name="networkManagerOptions">The network manager options.</param>
     /// <param name="unitManagerOptions">The unit manager options.</param>
+    /// <param name="ntClientOptions">The nt client options.</param>
     public NosBrowserManager
     (
         Process process,
@@ -108,7 +114,8 @@ public class NosBrowserManager
         SceneManagerOptions sceneManagerOptions,
         PetManagerOptions petManagerOptions,
         NetworkManagerOptions networkManagerOptions,
-        UnitManagerOptions unitManagerOptions
+        UnitManagerOptions unitManagerOptions,
+        NtClientOptions ntClientOptions
     )
     {
         _playerManagerOptions = playerManagerOptions;
@@ -116,6 +123,7 @@ public class NosBrowserManager
         _petManagerOptions = petManagerOptions;
         _networkManagerOptions = networkManagerOptions;
         _unitManagerOptions = unitManagerOptions;
+        _ntClientOptions = ntClientOptions;
         Process = process;
         Memory = Process.Id == Process.GetCurrentProcess().Id ? new Memory() : new ExternalMemory(process);
         Scanner = new Scanner(process, process.MainModule);
@@ -193,6 +201,26 @@ public class NosBrowserManager
         {
             var player = PlayerManager.Player;
             return player.Address != nuint.Zero;
+        }
+    }
+
+    /// <summary>
+    /// Gets the nt client.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown if the browser is not initialized or there was an error with initialization of nt client.</exception>
+    public NtClient NtClient
+    {
+        get
+        {
+            if (_ntClient is null)
+            {
+                throw new InvalidOperationException
+                (
+                    "Could not get nt client. The browser manager is not initialized. Did you forget to call NosBrowserManager.Initialize?"
+                );
+            }
+
+            return _ntClient;
         }
     }
 
@@ -359,6 +387,24 @@ public class NosBrowserManager
             }
 
             _petManagerList = petManagerResult.Entity;
+        }
+
+        if (_ntClient is null)
+        {
+            var ntClientResult = NtClient.Create(this, _ntClientOptions);
+            if (!ntClientResult.IsSuccess)
+            {
+                errorResults.Add
+                (
+                    Result.FromError
+                    (
+                        new CouldNotInitializeModuleError(typeof(NtClient), ntClientResult.Error),
+                        ntClientResult
+                    )
+                );
+            }
+
+            _ntClient = ntClientResult.Entity;
         }
 
         return errorResults.Count switch

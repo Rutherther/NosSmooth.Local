@@ -21,7 +21,7 @@ internal class HookManager : IHookManager
     /// Initializes a new instance of the <see cref="HookManager"/> class.
     /// </summary>
     /// <param name="options">The hook manager options.</param>
-    public HookManager(IOptions<HookManagerOptions> options)
+    public HookManager(IOptionsSnapshot<HookManagerOptions> options)
     {
         _options = options.Value;
         _hooks = new Dictionary<string, INostaleHook>();
