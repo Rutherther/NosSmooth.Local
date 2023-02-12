@@ -5,8 +5,8 @@
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb;.dll</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <VersionPrefix>1.1.0</VersionPrefix>
-    <PackageReleaseNotes>Remove asserts from Inject and obtain errors from thread exit code.</PackageReleaseNotes>
+    <VersionPrefix>1.1.1</VersionPrefix>
+    <PackageReleaseNotes>Include nethost.dll inside of the injector.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +21,10 @@
 
   <ItemGroup>
     <Content Include="NosSmooth.Inject.dll" Pack="true" PackageCopyToOutput="true">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+
+    <Content Include="nethost.dll" Pack="true" PackageCopyToOutput="true">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
