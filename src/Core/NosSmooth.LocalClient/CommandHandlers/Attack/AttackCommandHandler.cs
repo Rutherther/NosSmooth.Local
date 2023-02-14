@@ -56,7 +56,10 @@ public class AttackCommandHandler : ICommandHandler<AttackCommand>
             var entityResult = _sceneManager.FindEntity(command.TargetId.Value);
             if (entityResult.IsDefined(out var entity))
             {
-                _synchronizer.EnqueueOperation(() => _entityFocusHook.WrapperFunction(entity));
+                if (_entityFocusHook.WrapperFunction.IsPresent)
+                {
+                    _synchronizer.EnqueueOperation(() => _entityFocusHook.WrapperFunction.Get()(entity));
+                }
             }
         }
 

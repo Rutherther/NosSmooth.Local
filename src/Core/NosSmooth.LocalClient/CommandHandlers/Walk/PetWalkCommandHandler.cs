@@ -78,8 +78,9 @@ public class PetWalkCommandHandler : ICommandHandler<PetWalkCommand>
                 (
                     () => _userActionDetector.NotUserAction<Result<bool>>
                     (
-                        () => _petWalkHook.WrapperFunction(petManager, (ushort)x, (ushort)y)
-                    )
+                        () => _petWalkHook.WrapperFunction.Get()(petManager, (ushort)x, (ushort)y)
+                    ),
+                    ct
                 ),
             petManager,
             _options
