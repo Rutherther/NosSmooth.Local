@@ -111,7 +111,7 @@ public class Optional<T>
             return OptionalUtilities.TryGet(() => get(Value));
         }
 
-        return new OptionalNotPresentError(nameof(T));
+        return new OptionalNotPresentError(typeof(T).Name);
     }
 
     /// <summary>
@@ -128,7 +128,7 @@ public class Optional<T>
             return OptionalUtilities.Try(() => get(Value));
         }
 
-        return new OptionalNotPresentError(nameof(T));
+        return new OptionalNotPresentError(typeof(T).Name);
     }
 
     /// <summary>
@@ -151,7 +151,7 @@ public class Optional<T>
             return get(Value);
         }
 
-        return new OptionalNotPresentError(nameof(T));
+        return new OptionalNotPresentError(typeof(T).Name);
     }
 
     /// <summary>
@@ -174,7 +174,7 @@ public class Optional<T>
             return get(Value);
         }
 
-        return new OptionalNotPresentError(nameof(T));
+        return new OptionalNotPresentError(typeof(T).Name);
     }
 
     /// <summary>
