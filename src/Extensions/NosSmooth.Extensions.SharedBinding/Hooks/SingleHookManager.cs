@@ -152,7 +152,7 @@ public class SingleHookManager : IHookManager
                 ($"Could not load hook {hookType.Name}. Did you forget to call IHookManager.Initialize?");
         }
 
-        var hook = _hooks.Values.FirstOrDefault(x => x.GetType() == hookType);
+        var hook = _hooks.Values.FirstOrDefault(hookType.IsInstanceOfType);
         if (hook is null)
         {
             return Optional<INostaleHook>.Empty;
