@@ -30,7 +30,7 @@ internal class EntityFocusHook : CancelableNostaleHook<IEntityFocusHook.EntityFo
         var hook = CreateHook
         (
             bindingManager,
-            () => new EntityFocusHook(browserManager.UnitManager),
+            () => new EntityFocusHook(browserManager.Memory, browserManager.UnitManager),
             hook => hook.Detour,
             options
         );
@@ -38,10 +38,12 @@ internal class EntityFocusHook : CancelableNostaleHook<IEntityFocusHook.EntityFo
         return hook;
     }
 
-    private readonly UnitManager _unitManager;
+    private readonly Optional<UnitManager> _unitManager;
+    private readonly IMemory _memory;
 
-    private EntityFocusHook(UnitManager unitManager)
+    private EntityFocusHook(IMemory memory, Optional<UnitManager> unitManager)
     {
+        _memory = memory;
         _unitManager = unitManager;
     }
 
@@ -49,18 +51,20 @@ internal class EntityFocusHook : CancelableNostaleHook<IEntityFocusHook.EntityFo
     public override string Name => IHookManager.EntityFocusName;
 
     /// <inheritdoc />
-    public override IEntityFocusHook.EntityFocusWrapperDelegate WrapperFunction => (entity) => OriginalFunction
-        (_unitManager.Address, entity?.Address ?? 0);
+    public override Optional<IEntityFocusHook.EntityFocusWrapperDelegate> WrapperFunction
+        => _unitManager.Map<IEntityFocusHook.EntityFocusWrapperDelegate>
+            (unitManager => entity => OriginalFunction(unitManager.Address, entity?.Address ?? 0));
 
     /// <inheritdoc />
-    protected override IEntityFocusHook.EntityFocusDelegate WrapWithCalling(IEntityFocusHook.EntityFocusDelegate function)
+    protected override IEntityFocusHook.EntityFocusDelegate WrapWithCalling
+        (IEntityFocusHook.EntityFocusDelegate function)
         => (unitManagerPtr, entityPtr) =>
-            {
-                CallingFromNosSmooth = true;
-                var res = function(unitManagerPtr, entityPtr);
-                CallingFromNosSmooth = false;
-                return res;
-            };
+        {
+            CallingFromNosSmooth = true;
+            var res = function(unitManagerPtr, entityPtr);
+            CallingFromNosSmooth = false;
+            return res;
+        };
 
     private nuint Detour
     (
@@ -68,7 +72,7 @@ internal class EntityFocusHook : CancelableNostaleHook<IEntityFocusHook.EntityFo
         nuint entityPtr
     )
     {
-        var entity = new MapBaseObj(_unitManager.Memory, entityPtr);
+        var entity = new MapBaseObj(_memory, entityPtr);
         var entityArgs = new EntityEventArgs(entity);
         return HandleCall(entityArgs);
     }

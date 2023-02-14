@@ -37,22 +37,26 @@ internal class PlayerWalkHook : CancelableNostaleHook<IPlayerWalkHook.WalkDelega
         return hook;
     }
 
-    private PlayerWalkHook(PlayerManager playerManager)
+    private readonly Optional<PlayerManager> _playerManager;
+
+    private PlayerWalkHook(Optional<PlayerManager> playerManager)
     {
         _playerManager = playerManager;
     }
-
-    private PlayerManager _playerManager;
 
     /// <inheritdoc />
     public override string Name => IHookManager.CharacterWalkName;
 
     /// <inheritdoc />
-    public override IPlayerWalkHook.WalkWrapperDelegate WrapperFunction => (x, y) =>
-    {
-        var playerManagerObject = _playerManager.Address;
-        return OriginalFunction(playerManagerObject,  (y << 16) | x) == 1;
-    };
+    public override Optional<IPlayerWalkHook.WalkWrapperDelegate> WrapperFunction
+        => _playerManager.Map<IPlayerWalkHook.WalkWrapperDelegate>
+        (
+            playerManager => (x, y) =>
+            {
+                var playerManagerObject = playerManager.Address;
+                return OriginalFunction(playerManagerObject, (y << 16) | x) == 1;
+            }
+        );
 
     /// <inheritdoc />
     protected override IPlayerWalkHook.WalkDelegate WrapWithCalling(IPlayerWalkHook.WalkDelegate function)

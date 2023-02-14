@@ -30,33 +30,39 @@ internal class PacketSendHook : CancelableNostaleHook<IPacketSendHook.PacketSend
         (NosBindingManager bindingManager, NosBrowserManager browserManager, HookOptions<IPacketSendHook> options)
     {
         var hook = CreateHook
-            (
-                bindingManager,
-                () => new PacketSendHook(browserManager.NetworkManager),
-                (sendHook) => sendHook.Detour,
-                options
-            );
+        (
+            bindingManager,
+            () => new PacketSendHook(browserManager.Memory, browserManager.NetworkManager),
+            (sendHook) => sendHook.Detour,
+            options
+        );
 
         return hook;
     }
 
-    private PacketSendHook(NetworkManager networkManager)
+    private readonly IMemory _memory;
+    private readonly Optional<NetworkManager> _networkManager;
+
+    private PacketSendHook(IMemory memory, Optional<NetworkManager> networkManager)
     {
+        _memory = memory;
         _networkManager = networkManager;
     }
-
-    private readonly NetworkManager _networkManager;
 
     /// <inheritdoc />
     public override string Name => IHookManager.PacketSendName;
 
     /// <inheritdoc />
-    public override IPacketSendHook.PacketSendWrapperDelegate WrapperFunction => (packetString) =>
-    {
-        var packetObject = _networkManager.GetAddressForPacketSend();
-        using var nostaleString = NostaleStringA.Create(_networkManager.Memory, packetString);
-        OriginalFunction(packetObject, nostaleString.Get());
-    };
+    public override Optional<IPacketSendHook.PacketSendWrapperDelegate> WrapperFunction =>
+        _networkManager.Map<IPacketSendHook.PacketSendWrapperDelegate>
+        (
+            networkManager => (packetString) =>
+            {
+                var packetObject = networkManager.GetAddressForPacketSend();
+                using var nostaleString = NostaleStringA.Create(_memory, packetString);
+                OriginalFunction(packetObject, nostaleString.Get());
+            }
+        );
 
     /// <inheritdoc />
     protected override IPacketSendHook.PacketSendDelegate WrapWithCalling(IPacketSendHook.PacketSendDelegate function)

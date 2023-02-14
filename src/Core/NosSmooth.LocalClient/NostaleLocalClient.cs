@@ -13,6 +13,7 @@ using NosSmooth.Core.Commands.Control;
 using NosSmooth.Core.Extensions;
 using NosSmooth.Core.Packets;
 using NosSmooth.LocalBinding;
+using NosSmooth.LocalBinding.Errors;
 using NosSmooth.LocalBinding.EventArgs;
 using NosSmooth.LocalBinding.Hooks;
 using NosSmooth.LocalBinding.Objects;
@@ -85,15 +86,26 @@ public class NostaleLocalClient : BaseNostaleClient
     /// <inheritdoc />
     public override async Task<Result> RunAsync(CancellationToken stopRequested = default)
     {
+        if (!_hookManager.IsHookLoaded<IPacketSendHook>() || !_hookManager.IsHookLoaded<IPacketReceiveHook>())
+        {
+            return new NeededModulesNotInitializedError
+                ("Client cannot run", IHookManager.PacketSendName, IHookManager.PacketReceiveName);
+        }
+
         _stopRequested = stopRequested;
         _logger.LogInformation("Starting local client");
-        _synchronizer.StartSynchronizer();
-        _hookManager.PacketSend.Called += SendCallCallback;
-        _hookManager.PacketReceive.Called += ReceiveCallCallback;
+        var synchronizerResult = _synchronizer.StartSynchronizer();
+        if (!synchronizerResult.IsSuccess)
+        {
+            return synchronizerResult;
+        }
 
-        _hookManager.EntityFollow.Called += FollowEntity;
-        _hookManager.PlayerWalk.Called += Walk;
-        _hookManager.PetWalk.Called += PetWalk;
+        _hookManager.PacketSend.Get().Called += SendCallCallback;
+        _hookManager.PacketReceive.Get().Called += ReceiveCallCallback;
+
+        _hookManager.EntityFollow.TryDo(follow => follow.Called += FollowEntity);
+        _hookManager.PlayerWalk.TryDo(walk => walk.Called += Walk);
+        _hookManager.PetWalk.TryDo(walk => walk.Called += PetWalk);
 
         try
         {
@@ -104,12 +116,12 @@ public class NostaleLocalClient : BaseNostaleClient
             // ignored
         }
 
-        _hookManager.PacketSend.Called -= SendCallCallback;
-        _hookManager.PacketReceive.Called -= ReceiveCallCallback;
+        _hookManager.PacketSend.Get().Called -= SendCallCallback;
+        _hookManager.PacketReceive.Get().Called -= ReceiveCallCallback;
 
-        _hookManager.EntityFollow.Called -= FollowEntity;
-        _hookManager.PlayerWalk.Called -= Walk;
-        _hookManager.PetWalk.Called -= PetWalk;
+        _hookManager.EntityFollow.TryDo(follow => follow.Called -= FollowEntity);
+        _hookManager.PlayerWalk.TryDo(walk => walk.Called -= Walk);
+        _hookManager.PetWalk.TryDo(walk => walk.Called -= PetWalk);
 
         // the hooks are not needed anymore.
         _hookManager.DisableAll();
@@ -120,17 +132,59 @@ public class NostaleLocalClient : BaseNostaleClient
     /// <inheritdoc />
     public override async Task<Result> ReceivePacketAsync(string packetString, CancellationToken ct = default)
     {
-        ReceivePacket(packetString);
-        await ProcessPacketAsync(PacketSource.Server, packetString);
-        return Result.FromSuccess();
+        var result = _hookManager.PacketReceive.MapResult
+        (
+            receive => receive.WrapperFunction.MapResult
+            (
+                wrapperFunction =>
+                {
+                    _synchronizer.EnqueueOperation(() => wrapperFunction(packetString));
+                    return Result.FromSuccess();
+                }
+            )
+        );
+
+        if (result.IsSuccess)
+        {
+            _logger.LogDebug($"Receiving client packet {packetString}");
+            await ProcessPacketAsync(PacketSource.Server, packetString);
+        }
+        else
+        {
+            _logger.LogError("Could not receive packet");
+            _logger.LogResultError(result);
+        }
+
+        return result;
     }
 
     /// <inheritdoc />
     public override async Task<Result> SendPacketAsync(string packetString, CancellationToken ct = default)
     {
-        SendPacket(packetString);
-        await ProcessPacketAsync(PacketSource.Client, packetString);
-        return Result.FromSuccess();
+        var result = _hookManager.PacketSend.MapResult
+        (
+            send => send.WrapperFunction.MapResult
+            (
+                wrapperFunction =>
+                {
+                    _synchronizer.EnqueueOperation(() => wrapperFunction(packetString));
+                    return Result.FromSuccess();
+                }
+            )
+        );
+
+        if (result.IsSuccess)
+        {
+            _logger.LogDebug($"Sending client packet {packetString}");
+            await ProcessPacketAsync(PacketSource.Server, packetString);
+        }
+        else
+        {
+            _logger.LogError("Could not send packet");
+            _logger.LogResultError(result);
+        }
+
+        return result;
     }
 
     private void ReceiveCallCallback(object? owner, PacketEventArgs packetArgs)
@@ -181,18 +235,9 @@ public class NostaleLocalClient : BaseNostaleClient
     {
         _synchronizer.EnqueueOperation
         (
-            () => _hookManager.PacketSend.WrapperFunction(packetString)
+            () => _hookManager.PacketSend.Get().WrapperFunction.Get()(packetString)
         );
         _logger.LogDebug($"Sending client packet {packetString}");
-    }
-
-    private void ReceivePacket(string packetString)
-    {
-        _synchronizer.EnqueueOperation
-        (
-            () => _hookManager.PacketReceive.WrapperFunction(packetString)
-        );
-        _logger.LogDebug($"Receiving client packet {packetString}");
     }
 
     private async Task ProcessPacketAsync(PacketSource type, string packetString)

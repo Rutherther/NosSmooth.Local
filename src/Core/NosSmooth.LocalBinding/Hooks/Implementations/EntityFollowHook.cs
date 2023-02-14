@@ -6,6 +6,7 @@
 
 using NosSmooth.LocalBinding.EventArgs;
 using NosSmooth.LocalBinding.Structs;
+using Reloaded.Memory.Sources;
 using Remora.Results;
 
 namespace NosSmooth.LocalBinding.Hooks.Implementations;
@@ -29,7 +30,7 @@ internal class EntityFollowHook : CancelableNostaleHook<IEntityFollowHook.Entity
         var hook = CreateHook
         (
             bindingManager,
-            () => new EntityFollowHook(browserManager.PlayerManager),
+            () => new EntityFollowHook(browserManager.Memory, browserManager.PlayerManager),
             hook => hook.Detour,
             options
         );
@@ -37,10 +38,12 @@ internal class EntityFollowHook : CancelableNostaleHook<IEntityFollowHook.Entity
         return hook;
     }
 
-    private readonly PlayerManager _playerManager;
+    private readonly Optional<PlayerManager> _playerManager;
+    private readonly IMemory _memory;
 
-    private EntityFollowHook(PlayerManager playerManager)
+    private EntityFollowHook(IMemory memory, Optional<PlayerManager> playerManager)
     {
+        _memory = memory;
         _playerManager = playerManager;
     }
 
@@ -48,12 +51,20 @@ internal class EntityFollowHook : CancelableNostaleHook<IEntityFollowHook.Entity
     public override string Name => IHookManager.EntityFollowName;
 
     /// <inheritdoc />
-    public override IEntityFollowHook.EntityFollowWrapperDelegate WrapperFunction => (entity) => OriginalFunction
-        (_playerManager.Address, entity?.Address ?? 0);
+    public override Optional<IEntityFollowHook.EntityFollowWrapperDelegate> WrapperFunction
+        => _playerManager.Map<IEntityFollowHook.EntityFollowWrapperDelegate>
+            (playerManager => entity => OriginalFunction(playerManager.Address, entity?.Address ?? 0));
 
     /// <inheritdoc />
-    protected override IEntityFollowHook.EntityFollowDelegate WrapWithCalling(IEntityFollowHook.EntityFollowDelegate function)
-        => (playerManagerPtr, entityPtr, un0, un1) =>
+    protected override IEntityFollowHook.EntityFollowDelegate WrapWithCalling
+        (IEntityFollowHook.EntityFollowDelegate function)
+        =>
+            (
+                playerManagerPtr,
+                entityPtr,
+                un0,
+                un1
+            ) =>
             {
                 CallingFromNosSmooth = true;
                 var res = function(playerManagerPtr, entityPtr, un0, un1);
@@ -69,7 +80,7 @@ internal class EntityFollowHook : CancelableNostaleHook<IEntityFollowHook.Entity
         int unknown2 = 1
     )
     {
-        var entity = new MapBaseObj(_playerManager.Memory, entityPtr);
+        var entity = new MapBaseObj(_memory, entityPtr);
         var entityArgs = new EntityEventArgs(entity);
         return HandleCall(entityArgs);
     }

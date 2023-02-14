@@ -107,18 +107,17 @@ public class EntityCommands : CommandGroup
     public async Task<Result> HandleFocusAsync(int entityId)
     {
         var entityResult = _sceneManager.FindEntity(entityId);
-        if (!entityResult.IsSuccess)
+        if (!entityResult.IsDefined(out var entity))
         {
             return Result.FromError(entityResult);
         }
 
         return await _synchronizer.SynchronizeAsync
         (
-            () =>
-            {
-                _hookManager.EntityFocus.WrapperFunction(entityResult.Entity);
-                return Result.FromSuccess();
-            },
+            () => _hookManager.EntityFocus.MapResult
+            (
+                focus => focus.WrapperFunction.MapResult(wrapper => wrapper(entity))
+            ),
             CancellationToken
         );
     }
@@ -139,11 +138,10 @@ public class EntityCommands : CommandGroup
 
         return await _synchronizer.SynchronizeAsync
         (
-            () =>
-            {
-                _hookManager.EntityFollow.WrapperFunction(entity);
-                return Result.FromSuccess();
-            },
+            () => _hookManager.EntityFollow.MapResult
+            (
+                follow => follow.WrapperFunction.MapResult(wrapper => wrapper(entity))
+            ),
             CancellationToken
         );
     }
@@ -157,11 +155,10 @@ public class EntityCommands : CommandGroup
     {
         return await _synchronizer.SynchronizeAsync
         (
-            () =>
-            {
-                _hookManager.EntityUnfollow.WrapperFunction();
-                return Result.FromSuccess();
-            },
+            () => _hookManager.EntityUnfollow.MapResult
+            (
+                unfollow => unfollow.WrapperFunction.MapResult(wrapper => wrapper())
+            ),
             CancellationToken
         );
     }

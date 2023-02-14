@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.ObjectiveC;
 using Reloaded.Memory.Pointers;
 using Reloaded.Memory.Sources;
+using Remora.Results;
 
 namespace NosSmooth.LocalBinding.Structs;
 
@@ -16,7 +17,7 @@ namespace NosSmooth.LocalBinding.Structs;
 /// A class representing a list from nostale.
 /// </summary>
 /// <typeparam name="T">The type.</typeparam>
-public abstract class NostaleList<T> : IEnumerable<T>
+public abstract class NostaleList<T> : NostaleObject, IEnumerable<T>
     where T : NostaleObject
 {
     private readonly IMemory _memory;
@@ -27,15 +28,10 @@ public abstract class NostaleList<T> : IEnumerable<T>
     /// <param name="memory">The memory.</param>
     /// <param name="objListPointer">The object list pointer.</param>
     public NostaleList(IMemory memory, nuint objListPointer)
+        : base(memory, objListPointer)
     {
         _memory = memory;
-        Address = objListPointer;
     }
-
-    /// <summary>
-    /// Gets the address.
-    /// </summary>
-    protected nuint Address { get; }
 
     /// <summary>
     /// Gets the element at the given index.

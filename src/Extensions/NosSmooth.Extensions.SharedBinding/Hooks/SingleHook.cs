@@ -6,6 +6,7 @@
 
 using System.ComponentModel;
 using NosSmooth.Extensions.SharedBinding.EventArgs;
+using NosSmooth.LocalBinding;
 using NosSmooth.LocalBinding.Hooks;
 using Remora.Results;
 
@@ -37,6 +38,9 @@ public class SingleHook<TFunction, TWrapperFunction, TEventArgs> : INostaleHook<
     /// Called upon Enable or Disable.
     /// </summary>
     public event EventHandler<HookStateEventArgs>? StateChanged;
+
+    /// <inheritdoc />
+    public bool IsUsable => _underlyingHook.IsUsable;
 
     /// <inheritdoc />
     public string Name => _underlyingHook.Name;
@@ -76,7 +80,7 @@ public class SingleHook<TFunction, TWrapperFunction, TEventArgs> : INostaleHook<
     }
 
     /// <inheritdoc />
-    public TWrapperFunction WrapperFunction => _underlyingHook.WrapperFunction;
+    public Optional<TWrapperFunction> WrapperFunction => _underlyingHook.WrapperFunction;
 
     /// <inheritdoc />
     public TFunction OriginalFunction => _underlyingHook.OriginalFunction;

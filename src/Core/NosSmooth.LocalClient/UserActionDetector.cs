@@ -106,7 +106,7 @@ public class UserActionDetector
             () =>
             {
                 _lastWalkPosition = ((ushort)x, (ushort)y);
-                return walkHook.WrapperFunction((ushort)x, (ushort)y);
+                return walkHook.WrapperFunction.MapResult(func => func((ushort)x, (ushort)y));
             }
         );
 
@@ -124,7 +124,7 @@ public class UserActionDetector
             () =>
             {
                 _lastWalkPosition = ((ushort)x, (ushort)y);
-                return walkHook.WrapperFunction((ushort)x, (ushort)y);
+                return walkHook.WrapperFunction.MapResult(func => func((ushort)x, (ushort)y));
             },
             ct
         );

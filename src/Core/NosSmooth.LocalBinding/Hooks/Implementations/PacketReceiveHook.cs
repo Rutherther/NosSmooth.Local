@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using NosSmooth.LocalBinding.EventArgs;
 using NosSmooth.LocalBinding.Objects;
 using NosSmooth.LocalBinding.Structs;
+using Reloaded.Memory.Sources;
 using Remora.Results;
 
 namespace NosSmooth.LocalBinding.Hooks.Implementations;
@@ -29,20 +30,22 @@ internal class PacketReceiveHook : CancelableNostaleHook<IPacketReceiveHook.Pack
         (NosBindingManager bindingManager, NosBrowserManager browserManager, HookOptions<IPacketReceiveHook> options)
     {
         var hook = CreateHook
-            (
-                bindingManager,
-                () => new PacketReceiveHook(browserManager.NetworkManager),
-                (hook) => hook.Detour,
-                options
-            );
+        (
+            bindingManager,
+            () => new PacketReceiveHook(browserManager.Memory, browserManager.NetworkManager),
+            (hook) => hook.Detour,
+            options
+        );
 
         return hook;
     }
 
-    private NetworkManager _networkManager;
+    private readonly IMemory _memory;
+    private Optional<NetworkManager> _networkManager;
 
-    private PacketReceiveHook(NetworkManager networkManager)
+    private PacketReceiveHook(IMemory memory, Optional<NetworkManager> networkManager)
     {
+        _memory = memory;
         _networkManager = networkManager;
     }
 
@@ -50,15 +53,20 @@ internal class PacketReceiveHook : CancelableNostaleHook<IPacketReceiveHook.Pack
     public override string Name => IHookManager.PacketReceiveName;
 
     /// <inheritdoc />
-    public override IPacketReceiveHook.PacketReceiveWrapperDelegate WrapperFunction => (packetString) =>
-    {
-        var packetObject = _networkManager.GetAddressForPacketReceive();
-        using var nostaleString = NostaleStringA.Create(_networkManager.Memory, packetString);
-        OriginalFunction(packetObject, nostaleString.Get());
-    };
+    public override Optional<IPacketReceiveHook.PacketReceiveWrapperDelegate> WrapperFunction
+        => _networkManager.Map<IPacketReceiveHook.PacketReceiveWrapperDelegate>
+        (
+            networkManager => (packetString) =>
+            {
+                var packetObject = networkManager.GetAddressForPacketReceive();
+                using var nostaleString = NostaleStringA.Create(_memory, packetString);
+                OriginalFunction(packetObject, nostaleString.Get());
+            }
+        );
 
     /// <inheritdoc />
-    protected override IPacketReceiveHook.PacketReceiveDelegate WrapWithCalling(IPacketReceiveHook.PacketReceiveDelegate function)
+    protected override IPacketReceiveHook.PacketReceiveDelegate WrapWithCalling
+        (IPacketReceiveHook.PacketReceiveDelegate function)
         => (packetObject, packetString) =>
         {
             CallingFromNosSmooth = true;

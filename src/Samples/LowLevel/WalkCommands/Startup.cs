@@ -16,6 +16,7 @@ using NosSmooth.Extensions.Pathfinding.Extensions;
 using NosSmooth.Extensions.SharedBinding.Extensions;
 using NosSmooth.LocalBinding;
 using NosSmooth.LocalBinding.Extensions;
+using NosSmooth.LocalBinding.Hooks;
 using NosSmooth.LocalClient;
 using NosSmooth.LocalClient.Extensions;
 using NosSmooth.PacketSerializer.Extensions;
@@ -81,6 +82,16 @@ public class Startup
         {
             logger.LogError($"Could not initialize NosBindingManager.");
             logger.LogResultError(initializeResult);
+        }
+        
+        if (!bindingManager.IsModulePresent<IPeriodicHook>() || !bindingManager.IsModulePresent<IPacketSendHook>()
+            || !bindingManager.IsModulePresent<IPacketReceiveHook>())
+        {
+            logger.LogError
+            (
+                "At least one of: periodic, packet receive, packet send has not been loaded correctly, the bot may not be used at all. Aborting"
+            );
+            return;
         }
 
         var packetTypesRepository = provider.GetRequiredService<IPacketTypesRepository>();

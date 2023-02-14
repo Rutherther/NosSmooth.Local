@@ -53,18 +53,14 @@ public class NosBrowserManager
             .GetProcesses()
             .Where(IsProcessNostaleProcess);
 
+    private readonly Dictionary<Type, NostaleObject> _modules;
     private readonly PlayerManagerOptions _playerManagerOptions;
     private readonly SceneManagerOptions _sceneManagerOptions;
     private readonly PetManagerOptions _petManagerOptions;
     private readonly NetworkManagerOptions _networkManagerOptions;
     private readonly UnitManagerOptions _unitManagerOptions;
     private readonly NtClientOptions _ntClientOptions;
-    private PlayerManager? _playerManager;
-    private SceneManager? _sceneManager;
-    private PetManagerList? _petManagerList;
-    private NetworkManager? _networkManager;
-    private UnitManager? _unitManager;
-    private NtClient? _ntClient;
+    private bool _initialized;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NosBrowserManager"/> class.
@@ -118,6 +114,7 @@ public class NosBrowserManager
         NtClientOptions? ntClientOptions = default
     )
     {
+        _modules = new Dictionary<Type, NostaleObject>();
         _playerManagerOptions = playerManagerOptions ?? new PlayerManagerOptions();
         _sceneManagerOptions = sceneManagerOptions ?? new SceneManagerOptions();
         _petManagerOptions = petManagerOptions ?? new PetManagerOptions();
@@ -150,139 +147,47 @@ public class NosBrowserManager
     public bool IsNostaleProcess => NosBrowserManager.IsProcessNostaleProcess(Process);
 
     /// <summary>
-    /// Gets the network manager.
-    /// </summary>
-    /// <exception cref="InvalidOperationException">Thrown if the browser is not initialized or there was an error with initialization of network manager.</exception>
-    public NetworkManager NetworkManager
-    {
-        get
-        {
-            if (_networkManager is null)
-            {
-                throw new InvalidOperationException
-                (
-                    "Could not get network manager. The browser manager is not initialized. Did you forget to call NosBrowserManager.Initialize?"
-                );
-            }
-
-            return _networkManager;
-        }
-    }
-
-    /// <summary>
-    /// Gets the network manager.
-    /// </summary>
-    /// <exception cref="InvalidOperationException">Thrown if the browser is not initialized or there was an error with initialization of unit manager.</exception>
-    public UnitManager UnitManager
-    {
-        get
-        {
-            if (_unitManager is null)
-            {
-                throw new InvalidOperationException
-                (
-                    "Could not get unit manager. The browser manager is not initialized. Did you forget to call NosBrowserManager.Initialize?"
-                );
-            }
-
-            return _unitManager;
-        }
-    }
-
-    /// <summary>
     /// Gets whether the player is currently in game.
     /// </summary>
     /// <remarks>
     /// It may be unsafe to access some data if the player is not in game.
     /// </remarks>
-    public bool IsInGame
-    {
-        get
-        {
-            var player = PlayerManager.Player;
-            return player.Address != nuint.Zero;
-        }
-    }
+    public Optional<bool> IsInGame => PlayerManager.Map(manager => manager.Player.Address != nuint.Zero);
+
+    /// <summary>
+    /// Gets the network manager.
+    /// </summary>
+    public Optional<NetworkManager> NetworkManager => GetModule<NetworkManager>();
+
+    /// <summary>
+    /// Gets the network manager.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown if the browser is not initialized or there was an error with initialization of unit manager.</exception>
+    public Optional<UnitManager> UnitManager => GetModule<UnitManager>();
 
     /// <summary>
     /// Gets the nt client.
     /// </summary>
     /// <exception cref="InvalidOperationException">Thrown if the browser is not initialized or there was an error with initialization of nt client.</exception>
-    public NtClient NtClient
-    {
-        get
-        {
-            if (_ntClient is null)
-            {
-                throw new InvalidOperationException
-                (
-                    "Could not get nt client. The browser manager is not initialized. Did you forget to call NosBrowserManager.Initialize?"
-                );
-            }
-
-            return _ntClient;
-        }
-    }
+    public Optional<NtClient> NtClient => GetModule<NtClient>();
 
     /// <summary>
     /// Gets the player manager.
     /// </summary>
     /// <exception cref="InvalidOperationException">Thrown if the browser is not initialized or there was an error with initialization of player manager.</exception>
-    public PlayerManager PlayerManager
-    {
-        get
-        {
-            if (_playerManager is null)
-            {
-                throw new InvalidOperationException
-                (
-                    "Could not get player manager. The browser manager is not initialized. Did you forget to call NosBrowserManager.Initialize?"
-                );
-            }
-
-            return _playerManager;
-        }
-    }
+    public Optional<PlayerManager> PlayerManager => GetModule<PlayerManager>();
 
     /// <summary>
     /// Gets the scene manager.
     /// </summary>
     /// <exception cref="InvalidOperationException">Thrown if the browser is not initialized or there was an error with initialization of scene manager.</exception>
-    public SceneManager SceneManager
-    {
-        get
-        {
-            if (_sceneManager is null)
-            {
-                throw new InvalidOperationException
-                (
-                    "Could not get scene manager. The browser manager is not initialized. Did you forget to call NosBrowserManager.Initialize?"
-                );
-            }
-
-            return _sceneManager;
-        }
-    }
+    public Optional<SceneManager> SceneManager => GetModule<SceneManager>();
 
     /// <summary>
     /// Gets the pet manager list.
     /// </summary>
     /// <exception cref="InvalidOperationException">Thrown if the browser is not initialized or there was an error with initialization of pet manager list.</exception>
-    public PetManagerList PetManagerList
-    {
-        get
-        {
-            if (_petManagerList is null)
-            {
-                throw new InvalidOperationException
-                (
-                    "Could not get pet manager list. The browser manager is not initialized. Did you forget to call NosBrowserManager.Initialize?"
-                );
-            }
-
-            return _petManagerList;
-        }
-    }
+    public Optional<PetManagerList> PetManagerList => GetModule<PetManagerList>();
 
     /// <summary>
     /// Initialize the nos browser modules.
@@ -298,120 +203,135 @@ public class NosBrowserManager
             return (Result)new NotNostaleProcessError(Process);
         }
 
+        NostaleObject Map<T>(T val)
+            where T : NostaleObject
+        {
+            return val;
+        }
+
+        _initialized = true;
+        return HandleResults
+        (
+            (typeof(UnitManager), () => Structs.UnitManager.Create(this, _unitManagerOptions).Map(Map)),
+            (typeof(NetworkManager), () => Structs.NetworkManager.Create(this, _networkManagerOptions).Map(Map)),
+            (typeof(PlayerManager), () => Structs.PlayerManager.Create(this, _playerManagerOptions).Map(Map)),
+            (typeof(SceneManager), () => Structs.SceneManager.Create(this, _sceneManagerOptions).Map(Map)),
+            (typeof(PetManagerList), () => Structs.PetManagerList.Create(this, _petManagerOptions).Map(Map)),
+            (typeof(NtClient), () => Structs.NtClient.Create(this, _ntClientOptions).Map(Map))
+        );
+    }
+
+    /// <summary>
+    /// Gets whether a hook or browser module is present/loaded.
+    /// Returns false in case pattern was not found.
+    /// </summary>
+    /// <typeparam name="TModule">The type of the module.</typeparam>
+    /// <returns>Whether the module is present.</returns>
+    public bool IsModuleLoaded<TModule>()
+        where TModule : NostaleObject
+        => IsModuleLoaded(typeof(TModule));
+
+    /// <summary>
+    /// Gets whether a hook or browser module is present/loaded.
+    /// Returns false in case pattern was not found.
+    /// </summary>
+    /// <param name="moduleType">The type of the module.</typeparam>
+    /// <returns>Whether the module is present.</returns>
+    public bool IsModuleLoaded(Type moduleType)
+    {
+        return GetModule(moduleType).IsPresent;
+    }
+
+    /// <summary>
+    /// Get module of the specified type.
+    /// </summary>
+    /// <typeparam name="TModule">The type of the module.</typeparam>
+    /// <returns>The module.</returns>
+    /// <exception cref="InvalidOperationException">Thrown in case the manager was not initialized.</exception>
+    public Optional<TModule> GetModule<TModule>()
+        where TModule : NostaleObject
+    {
+        if (!_initialized)
+        {
+            throw new InvalidOperationException
+            (
+                $"Could not get {typeof(TModule)}. The browser manager is not initialized. Did you forget to call NosBrowserManager.Initialize?"
+            );
+        }
+
+        if (!_modules.TryGetValue(typeof(TModule), out var nosObject) || nosObject is not TModule typed)
+        {
+            return Optional<TModule>.Empty;
+        }
+
+        return typed;
+    }
+
+    /// <summary>
+    /// Get module of the specified type.
+    /// </summary>
+    /// <param name="moduleType">The type of the module.</typeparam>
+    /// <returns>The module.</returns>
+    /// <exception cref="InvalidOperationException">Thrown in case the manager was not initialized.</exception>
+    public Optional<NostaleObject> GetModule(Type moduleType)
+    {
+        if (!_initialized)
+        {
+            throw new InvalidOperationException
+            (
+                $"Could not get {moduleType.Name}. The browser manager is not initialized. Did you forget to call NosBrowserManager.Initialize?"
+            );
+        }
+
+        if (!_modules.TryGetValue(moduleType, out var nosObject))
+        {
+            return Optional<NostaleObject>.Empty;
+        }
+
+        return nosObject;
+    }
+
+    private Result HandleResults(params (Type Type, Func<Result<NostaleObject>> Builder)[] objects)
+    {
+        Result<NostaleObject> HandleSafe(Func<Result<NostaleObject>> builder)
+        {
+            try
+            {
+                return builder();
+            }
+            catch (Exception e)
+            {
+                return e;
+            }
+        }
+
         List<IResult> errorResults = new List<IResult>();
-        if (_unitManager is null)
+        foreach (var obj in objects)
         {
-            var unitManagerResult = UnitManager.Create(this, _unitManagerOptions);
-            if (!unitManagerResult.IsSuccess)
+            var createdResult = HandleSafe(obj.Builder);
+
+            if (!createdResult.IsSuccess)
             {
                 errorResults.Add
                 (
                     Result.FromError
                     (
-                        new CouldNotInitializeModuleError(typeof(UnitManager), unitManagerResult.Error),
-                        unitManagerResult
+                        new CouldNotInitializeModuleError(obj.Type, createdResult.Error),
+                        createdResult
                     )
                 );
             }
-
-            _unitManager = unitManagerResult.Entity;
-        }
-
-        if (_networkManager is null)
-        {
-            var networkManagerResult = NetworkManager.Create(this, _networkManagerOptions);
-            if (!networkManagerResult.IsSuccess)
+            else if (createdResult.IsDefined(out var created))
             {
-                errorResults.Add
-                (
-                    Result.FromError
-                    (
-                        new CouldNotInitializeModuleError(typeof(NetworkManager), networkManagerResult.Error),
-                        networkManagerResult
-                    )
-                );
+                _modules.Add(obj.Type, created);
             }
-
-            _networkManager = networkManagerResult.Entity;
-        }
-
-        if (_playerManager is null)
-        {
-            var playerManagerResult = PlayerManager.Create(this, _playerManagerOptions);
-            if (!playerManagerResult.IsSuccess)
-            {
-                errorResults.Add
-                (
-                    Result.FromError
-                    (
-                        new CouldNotInitializeModuleError(typeof(PlayerManager), playerManagerResult.Error),
-                        playerManagerResult
-                    )
-                );
-            }
-
-            _playerManager = playerManagerResult.Entity;
-        }
-
-        if (_sceneManager is null)
-        {
-            var sceneManagerResult = SceneManager.Create(this, _sceneManagerOptions);
-            if (!sceneManagerResult.IsSuccess)
-            {
-                errorResults.Add
-                (
-                    Result.FromError
-                    (
-                        new CouldNotInitializeModuleError(typeof(SceneManager), sceneManagerResult.Error),
-                        sceneManagerResult
-                    )
-                );
-            }
-
-            _sceneManager = sceneManagerResult.Entity;
-        }
-
-        if (_petManagerList is null)
-        {
-            var petManagerResult = PetManagerList.Create(this, _petManagerOptions);
-            if (!petManagerResult.IsSuccess)
-            {
-                errorResults.Add
-                (
-                    Result.FromError
-                    (
-                        new CouldNotInitializeModuleError(typeof(PetManagerList), petManagerResult.Error),
-                        petManagerResult
-                    )
-                );
-            }
-
-            _petManagerList = petManagerResult.Entity;
-        }
-
-        if (_ntClient is null)
-        {
-            var ntClientResult = NtClient.Create(this, _ntClientOptions);
-            if (!ntClientResult.IsSuccess)
-            {
-                errorResults.Add
-                (
-                    Result.FromError
-                    (
-                        new CouldNotInitializeModuleError(typeof(NtClient), ntClientResult.Error),
-                        ntClientResult
-                    )
-                );
-            }
-
-            _ntClient = ntClientResult.Entity;
         }
 
         return errorResults.Count switch
         {
             0 => Result.FromSuccess(),
-            1 => errorResults[0],
-            _ => (Result)new AggregateError(errorResults)
+            1 => (Result)errorResults[0],
+            _ => new AggregateError(errorResults)
         };
     }
 }
