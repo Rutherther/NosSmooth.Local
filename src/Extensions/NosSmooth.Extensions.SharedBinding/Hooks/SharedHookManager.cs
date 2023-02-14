@@ -26,8 +26,6 @@ public class SharedHookManager
     /// Initializes a new instance of the <see cref="SharedHookManager"/> class.
     /// </summary>
     /// <param name="underlyingManager">The underlying hook manager.</param>
-    /// <param name="bindingManager">The binding manager.</param>
-    /// <param name="browserManager">The browser manager.</param>
     public SharedHookManager
     (
         IHookManager underlyingManager
