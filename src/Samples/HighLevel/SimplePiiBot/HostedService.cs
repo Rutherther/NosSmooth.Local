@@ -11,6 +11,7 @@ using NosSmooth.Core.Client;
 using NosSmooth.Core.Extensions;
 using NosSmooth.Data.NOSFiles;
 using NosSmooth.LocalBinding;
+using NosSmooth.LocalBinding.Hooks;
 using NosSmooth.PacketSerializer.Extensions;
 using NosSmooth.PacketSerializer.Packets;
 using OneOf.Types;
@@ -78,6 +79,15 @@ public class HostedService : BackgroundService
         if (!bindingResult.IsSuccess)
         {
             _logger.LogResultError(bindingResult);
+        }
+
+        if (!_bindingManager.IsModulePresent<IPeriodicHook>() || !_bindingManager.IsModulePresent<IPacketSendHook>()
+            || !_bindingManager.IsModulePresent<IPacketReceiveHook>())
+        {
+            _logger.LogError
+            (
+                "At least one of: periodic, packet receive, packet send has not been loaded correctly, the bot may not be used at all. Aborting"
+            );
             return;
         }
 

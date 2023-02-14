@@ -55,17 +55,17 @@ public class Program
                     Console.Error.WriteLine(initializationResult.ToFullString());
                 }
 
-                var length = externalBrowser.PetManagerList.Length;
+                var length = externalBrowser.PetManagerList.Get().Length;
                 Console.WriteLine(length);
 
-                if (!externalBrowser.IsInGame)
+                if (!externalBrowser.IsInGame.Get())
                 {
                     Console.Error.WriteLine("The player is not in game, cannot get the name of the player.");
                     continue;
                 }
 
                 Console.WriteLine
-                    ($"Player in process {process.Id} is named {externalBrowser.PlayerManager.Player.Name}");
+                    ($"Player in process {process.Id} is named {externalBrowser.PlayerManager.Get().Player.Name}");
             }
         }
     }
