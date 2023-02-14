@@ -5,8 +5,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>10</LangVersion>
-        <VersionPrefix>1.1.0</VersionPrefix>
-        <PackageReleaseNotes>Add NtClient and EncryptionKey.</PackageReleaseNotes>
+        <VersionPrefix>2.0.0</VersionPrefix>
+        <PackageReleaseNotes>Add support for optional hooks and bindings.</PackageReleaseNotes>
     </PropertyGroup>
 
     <ItemGroup>

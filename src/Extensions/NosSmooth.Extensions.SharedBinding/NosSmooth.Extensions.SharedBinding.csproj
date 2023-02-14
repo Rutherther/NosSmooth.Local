@@ -4,8 +4,8 @@
         <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <VersionPrefix>0.1.0</VersionPrefix>
-        <PackageReleaseNotes>Update to NosSmooth.Core with splitted raw and managed clients.</PackageReleaseNotes>
+        <VersionPrefix>1.0.0</VersionPrefix>
+        <PackageReleaseNotes>Add support for optional hooks and bindings.</PackageReleaseNotes>
     </PropertyGroup>
 
     <ItemGroup>
