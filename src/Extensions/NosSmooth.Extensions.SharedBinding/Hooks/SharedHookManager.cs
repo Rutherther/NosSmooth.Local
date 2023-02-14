@@ -44,112 +44,137 @@ public class SharedHookManager
     /// <param name="browserManager">The browser manager.</param>
     /// <param name="options">The initial options to be respected.</param>
     /// <returns>The dictionary containing all of the hooks.</returns>
-    public Result<Dictionary<string, INostaleHook>> InitializeInstance
+    public (Dictionary<string, INostaleHook>, IResult) InitializeInstance
         (NosBindingManager bindingManager, NosBrowserManager browserManager, HookManagerOptions options)
     {
+        IResult result = Result.FromSuccess();
         if (!_initialized)
         {
-            var result = _underlyingManager.Initialize(bindingManager, browserManager);
+            result = _underlyingManager.Initialize(bindingManager, browserManager);
             _initialized = true;
-
-            if (!result.IsSuccess)
-            {
-                return Result<Dictionary<string, INostaleHook>>.FromError(result.Error);
-            }
         }
 
         var hooks = new Dictionary<string, INostaleHook>();
 
         // TODO: initialize using reflection
-        hooks.Add
+        HandleAdd
         (
-            _underlyingManager.Periodic.Name,
+            hooks,
+            IHookManager.PeriodicName,
             InitializeSingleHook
             (
-                new PeriodicHook(_underlyingManager.Periodic),
+                _underlyingManager.Periodic,
+                u => new PeriodicHook(u),
                 options.PeriodicHook
             )
         );
 
-        hooks.Add
+        HandleAdd
         (
-            _underlyingManager.EntityFocus.Name,
+            hooks,
+            IHookManager.EntityFocusName,
             InitializeSingleHook
             (
-                new EntityFocusHook(_underlyingManager.EntityFocus),
+                _underlyingManager.EntityFocus,
+                u => new EntityFocusHook(u),
                 options.EntityFocusHook
             )
         );
 
-        hooks.Add
+        HandleAdd
         (
-            _underlyingManager.EntityFollow.Name,
+            hooks,
+            IHookManager.EntityFollowName,
             InitializeSingleHook
             (
-                new EntityFollowHook(_underlyingManager.EntityFollow),
+                _underlyingManager.EntityFollow,
+                u => new EntityFollowHook(u),
                 options.EntityFollowHook
             )
         );
 
-        hooks.Add
+        HandleAdd
         (
-            _underlyingManager.EntityUnfollow.Name,
+            hooks,
+            IHookManager.EntityUnfollowName,
             InitializeSingleHook
             (
-                new EntityUnfollowHook(_underlyingManager.EntityUnfollow),
+                _underlyingManager.EntityUnfollow,
+                u => new EntityUnfollowHook(u),
                 options.EntityUnfollowHook
             )
         );
 
-        hooks.Add
+        HandleAdd
         (
-            _underlyingManager.PacketReceive.Name,
+            hooks,
+            IHookManager.PacketReceiveName,
             InitializeSingleHook
             (
-                new PacketReceiveHook(_underlyingManager.PacketReceive),
+                _underlyingManager.PacketReceive,
+                u => new PacketReceiveHook(u),
                 options.PacketReceiveHook
             )
         );
 
-        hooks.Add
+        HandleAdd
         (
-            _underlyingManager.PacketSend.Name,
+            hooks,
+            IHookManager.PacketSendName,
             InitializeSingleHook
             (
-                new PacketSendHook(_underlyingManager.PacketSend),
+                _underlyingManager.PacketSend,
+                u => new PacketSendHook(u),
                 options.PacketSendHook
             )
         );
 
-        hooks.Add
+        HandleAdd
         (
-            _underlyingManager.PetWalk.Name,
+            hooks,
+            IHookManager.PetWalkName,
             InitializeSingleHook
             (
-                new PetWalkHook(_underlyingManager.PetWalk),
+                _underlyingManager.PetWalk,
+                u => new PetWalkHook(u),
                 options.PetWalkHook
             )
         );
 
-        hooks.Add
+        HandleAdd
         (
-            _underlyingManager.PlayerWalk.Name,
+            hooks,
+            IHookManager.CharacterWalkName,
             InitializeSingleHook
             (
-                new PlayerWalkHook(_underlyingManager.PlayerWalk),
+                _underlyingManager.PlayerWalk,
+                u => new PlayerWalkHook(u),
                 options.PlayerWalkHook
             )
         );
 
-        return hooks;
+        return (hooks, result);
     }
 
-    private INostaleHook<TFunction, TWrapperFunction, TEventArgs> InitializeSingleHook<TFunction, TWrapperFunction,
-        TEventArgs>(SingleHook<TFunction, TWrapperFunction, TEventArgs> hook, HookOptions options)
+    private INostaleHook<TFunction, TWrapperFunction, TEventArgs>? InitializeSingleHook<THook, TFunction,
+        TWrapperFunction,
+        TEventArgs>
+    (
+        Optional<THook> hookOptional,
+        Func<THook, SingleHook<TFunction, TWrapperFunction, TEventArgs>> hookCreator,
+        HookOptions options
+    )
+        where THook : notnull
         where TFunction : Delegate
         where TWrapperFunction : Delegate
         where TEventArgs : System.EventArgs
     {
+        if (!hookOptional.TryGet(out var underlyingHook))
+        {
+            return null;
+        }
+
+        var hook = hookCreator(underlyingHook);
         hook.StateChanged += (_, state) =>
         {
             if (!_hookedCount.ContainsKey(hook.Name))
@@ -175,5 +200,13 @@ public class SharedHookManager
         }
 
         return hook;
+    }
+
+    private void HandleAdd(Dictionary<string, INostaleHook> hooks, string name, INostaleHook? hook)
+    {
+        if (hook is not null)
+        {
+            hooks.Add(name, hook);
+        }
     }
 }

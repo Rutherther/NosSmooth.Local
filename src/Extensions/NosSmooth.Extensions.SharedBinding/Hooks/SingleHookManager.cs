@@ -20,6 +20,7 @@ public class SingleHookManager : IHookManager
     private readonly SharedHookManager _sharedHookManager;
     private readonly HookManagerOptions _options;
     private Dictionary<string, INostaleHook> _hooks;
+    private bool _initialized;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SingleHookManager"/> class.
@@ -34,28 +35,28 @@ public class SingleHookManager : IHookManager
     }
 
     /// <inheritdoc />
-    public IPacketSendHook PacketSend => GetHook<IPacketSendHook>(IHookManager.PacketSendName);
+    public Optional<IPacketSendHook> PacketSend => GetHook<IPacketSendHook>(IHookManager.PacketSendName);
 
     /// <inheritdoc />
-    public IPacketReceiveHook PacketReceive => GetHook<IPacketReceiveHook>(IHookManager.PacketReceiveName);
+    public Optional<IPacketReceiveHook> PacketReceive => GetHook<IPacketReceiveHook>(IHookManager.PacketReceiveName);
 
     /// <inheritdoc />
-    public IPlayerWalkHook PlayerWalk => GetHook<IPlayerWalkHook>(IHookManager.CharacterWalkName);
+    public Optional<IPlayerWalkHook> PlayerWalk => GetHook<IPlayerWalkHook>(IHookManager.CharacterWalkName);
 
     /// <inheritdoc />
-    public IEntityFollowHook EntityFollow => GetHook<IEntityFollowHook>(IHookManager.EntityFollowName);
+    public Optional<IEntityFollowHook> EntityFollow => GetHook<IEntityFollowHook>(IHookManager.EntityFollowName);
 
     /// <inheritdoc />
-    public IEntityUnfollowHook EntityUnfollow => GetHook<IEntityUnfollowHook>(IHookManager.EntityUnfollowName);
+    public Optional<IEntityUnfollowHook> EntityUnfollow => GetHook<IEntityUnfollowHook>(IHookManager.EntityUnfollowName);
 
     /// <inheritdoc />
-    public IPetWalkHook PetWalk => GetHook<IPetWalkHook>(IHookManager.PetWalkName);
+    public Optional<IPetWalkHook> PetWalk => GetHook<IPetWalkHook>(IHookManager.PetWalkName);
 
     /// <inheritdoc />
-    public IEntityFocusHook EntityFocus => GetHook<IEntityFocusHook>(IHookManager.EntityFocusName);
+    public Optional<IEntityFocusHook> EntityFocus => GetHook<IEntityFocusHook>(IHookManager.EntityFocusName);
 
     /// <inheritdoc />
-    public IPeriodicHook Periodic => GetHook<IPeriodicHook>(IHookManager.PeriodicName);
+    public Optional<IPeriodicHook> Periodic => GetHook<IPeriodicHook>(IHookManager.PeriodicName);
 
     /// <inheritdoc />
     public IReadOnlyList<INostaleHook> Hooks => _hooks.Values.ToList();
@@ -63,14 +64,10 @@ public class SingleHookManager : IHookManager
     /// <inheritdoc />
     public IResult Initialize(NosBindingManager bindingManager, NosBrowserManager browserManager)
     {
-        var hooksResult = _sharedHookManager.InitializeInstance(bindingManager, browserManager, _options);
-        if (!hooksResult.IsDefined(out var hooks))
-        {
-            return hooksResult;
-        }
-
+        _initialized = true;
+        var (hooks, result) = _sharedHookManager.InitializeInstance(bindingManager, browserManager, _options);
         _hooks = hooks;
-        return Result.FromSuccess();
+        return result;
     }
 
     /// <inheritdoc />
@@ -79,7 +76,7 @@ public class SingleHookManager : IHookManager
         foreach (var name in names)
         {
             var hook = GetHook<INostaleHook>(name);
-            hook.Enable();
+            hook.TryDo(h => h.Enable());
         }
     }
 
@@ -89,7 +86,7 @@ public class SingleHookManager : IHookManager
         foreach (var name in names)
         {
             var hook = GetHook<INostaleHook>(name);
-            hook.Disable();
+            hook.TryDo(h => h.Disable());
         }
     }
 
@@ -111,15 +108,56 @@ public class SingleHookManager : IHookManager
         }
     }
 
-    private T GetHook<T>(string name)
+    /// <inheritdoc/>
+    public bool IsHookLoaded<THook>()
+        where THook : INostaleHook
+        => IsHookLoaded(typeof(THook));
+
+    /// <inheritdoc/>
+    public bool IsHookUsable<THook>()
+        where THook : INostaleHook
+        => IsHookUsable(typeof(THook));
+
+    /// <inheritdoc/>
+    public bool IsHookLoaded(Type hookType)
+        => GetHook(hookType).IsPresent;
+
+    /// <inheritdoc/>
+    public bool IsHookUsable(Type hookType)
+        => GetHook(hookType).TryGet(out var h) && h.IsUsable;
+
+    private Optional<T> GetHook<T>(string name)
         where T : INostaleHook
     {
-        if (!_hooks.ContainsKey(name) || _hooks[name] is not T typed)
+        if (!_initialized)
         {
             throw new InvalidOperationException
-                ($"Could not load hook {name}. Did you forget to call IHookManager.Initialize?");
+                ($"Could not load hook {typeof(T)}. Did you forget to call IHookManager.Initialize?");
+        }
+
+        var hook = _hooks.Values.FirstOrDefault(x => x is T);
+        if (hook is not T typed)
+        {
+            return Optional<T>.Empty;
         }
 
         return typed;
+    }
+
+    private Optional<INostaleHook> GetHook(Type hookType)
+    {
+        if (!_initialized)
+        {
+            throw new InvalidOperationException
+                ($"Could not load hook {hookType.Name}. Did you forget to call IHookManager.Initialize?");
+        }
+
+        var hook = _hooks.Values.FirstOrDefault(x => x.GetType() == hookType);
+        if (hook is null)
+        {
+            return Optional<INostaleHook>.Empty;
+        }
+
+        return new Optional<INostaleHook>(hook);
     }
 }
