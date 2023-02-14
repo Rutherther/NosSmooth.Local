@@ -196,11 +196,11 @@ public class NosBrowserManager
     /// Needed to use all of the classes from NosTale.
     /// </remarks>
     /// <returns>A result that may or may not have succeeded.</returns>
-    public IResult Initialize()
+    public Result Initialize()
     {
         if (!IsNostaleProcess)
         {
-            return (Result)new NotNostaleProcessError(Process);
+            return new NotNostaleProcessError(Process);
         }
 
         NostaleObject Map<T>(T val)

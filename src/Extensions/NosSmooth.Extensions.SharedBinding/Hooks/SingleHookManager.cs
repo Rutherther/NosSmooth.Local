@@ -62,7 +62,7 @@ public class SingleHookManager : IHookManager
     public IReadOnlyList<INostaleHook> Hooks => _hooks.Values.ToList();
 
     /// <inheritdoc />
-    public IResult Initialize(NosBindingManager bindingManager, NosBrowserManager browserManager)
+    public Result Initialize(NosBindingManager bindingManager, NosBrowserManager browserManager)
     {
         _initialized = true;
         var (hooks, result) = _sharedHookManager.InitializeInstance(bindingManager, browserManager, _options);

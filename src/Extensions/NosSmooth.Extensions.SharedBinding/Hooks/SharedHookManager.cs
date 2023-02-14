@@ -42,10 +42,10 @@ public class SharedHookManager
     /// <param name="browserManager">The browser manager.</param>
     /// <param name="options">The initial options to be respected.</param>
     /// <returns>The dictionary containing all of the hooks.</returns>
-    public (Dictionary<string, INostaleHook>, IResult) InitializeInstance
+    public (Dictionary<string, INostaleHook>, Result) InitializeInstance
         (NosBindingManager bindingManager, NosBrowserManager browserManager, HookManagerOptions options)
     {
-        IResult result = Result.FromSuccess();
+        Result result = Result.FromSuccess();
         if (!_initialized)
         {
             result = _underlyingManager.Initialize(bindingManager, browserManager);

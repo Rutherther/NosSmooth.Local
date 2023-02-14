@@ -57,7 +57,7 @@ internal class HookManager : IHookManager
     public IReadOnlyList<INostaleHook> Hooks => _hooks.Values.ToList();
 
     /// <inheritdoc/>
-    public IResult Initialize(NosBindingManager bindingManager, NosBrowserManager browserManager)
+    public Result Initialize(NosBindingManager bindingManager, NosBrowserManager browserManager)
     {
         _initialized = true;
         if (_hooks.Count > 0)
@@ -84,7 +84,7 @@ internal class HookManager : IHookManager
         return original;
     }
 
-    private IResult HandleResults(params Func<Result<INostaleHook>>[] functions)
+    private Result HandleResults(params Func<Result<INostaleHook>>[] functions)
     {
         List<IResult> errorResults = new List<IResult>();
         foreach (var func in functions)
@@ -98,21 +98,20 @@ internal class HookManager : IHookManager
                 }
                 else
                 {
-                    errorResults.Add(result);
+                    errorResults.Add(Result.FromError(result));
                 }
             }
             catch (Exception e)
             {
                 errorResults.Add((Result)e);
             }
-
         }
 
         return errorResults.Count switch
         {
             0 => Result.FromSuccess(),
-            1 => errorResults[0],
-            _ => (Result)new AggregateError(errorResults)
+            1 => (Result)errorResults[0],
+            _ => new AggregateError(errorResults)
         };
     }
 

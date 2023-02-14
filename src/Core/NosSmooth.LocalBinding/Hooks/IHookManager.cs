@@ -108,7 +108,7 @@ public interface IHookManager
     /// <param name="bindingManager">The binding manager.</param>
     /// <param name="browserManager">The browser manager.</param>
     /// <returns>A result that may or may not have failed.</returns>
-    public IResult Initialize(NosBindingManager bindingManager, NosBrowserManager browserManager);
+    public Result Initialize(NosBindingManager bindingManager, NosBrowserManager browserManager);
 
     /// <summary>
     /// Enable hooks from the given list.
