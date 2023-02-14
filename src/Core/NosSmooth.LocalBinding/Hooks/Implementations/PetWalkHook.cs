@@ -48,8 +48,8 @@ internal class PetWalkHook : CancelableNostaleHook<IPetWalkHook.PetWalkDelegate,
     public override string Name => IHookManager.PetWalkName;
 
     /// <inheritdoc />
-    public override IPetWalkHook.PetWalkWrapperDelegate WrapperFunction
-        => (p, x, y) => OriginalFunction(p.Address, (y << 16) | x) == 1;
+    public override Optional<IPetWalkHook.PetWalkWrapperDelegate> WrapperFunction
+        => (IPetWalkHook.PetWalkWrapperDelegate)((p, x, y) => OriginalFunction(p.Address, (y << 16) | x) == 1);
 
     /// <inheritdoc />
     protected override IPetWalkHook.PetWalkDelegate WrapWithCalling(IPetWalkHook.PetWalkDelegate function)
@@ -63,7 +63,14 @@ internal class PetWalkHook : CancelableNostaleHook<IPetWalkHook.PetWalkDelegate,
             ) =>
             {
                 CallingFromNosSmooth = true;
-                var res = function(petManagerPtr, position, un0, un1, un2);
+                var res = function
+                (
+                    petManagerPtr,
+                    position,
+                    un0,
+                    un1,
+                    un2
+                );
                 CallingFromNosSmooth = false;
                 return res;
             };

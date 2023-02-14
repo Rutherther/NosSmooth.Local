@@ -64,7 +64,7 @@ public abstract class CancelableNostaleHook<TFunction, TWrapperFunction, TEventA
     public bool IsEnabled => Hook.Hook.IsEnabled;
 
     /// <inheritdoc />
-    public abstract TWrapperFunction WrapperFunction { get; }
+    public abstract Optional<TWrapperFunction> WrapperFunction { get; }
 
     /// <inheritdoc/>
     public TFunction OriginalFunction
@@ -82,6 +82,9 @@ public abstract class CancelableNostaleHook<TFunction, TWrapperFunction, TEventA
 
     /// <inheritdoc />
     public event EventHandler<TEventArgs>? Called;
+
+    /// <inheritdoc />
+    public bool IsUsable => WrapperFunction.IsPresent;
 
     /// <inheritdoc />
     public abstract string Name { get; }

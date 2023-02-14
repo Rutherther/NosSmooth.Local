@@ -15,7 +15,7 @@ namespace NosSmooth.LocalBinding.Structs;
 /// <summary>
 /// Represents nostale scene manager struct.
 /// </summary>
-public class SceneManager
+public class SceneManager : NostaleObject
 {
     /// <summary>
     /// Create <see cref="PlayerManager"/> instance.
@@ -51,6 +51,7 @@ public class SceneManager
     /// <param name="staticSceneManagerAddress">The pointer to the scene manager.</param>
     /// <param name="sceneManagerOffsets">The offsets from the static scene manager address.</param>
     public SceneManager(IMemory memory, int staticSceneManagerAddress, int[] sceneManagerOffsets)
+        : base(memory, nuint.Zero)
     {
         _memory = memory;
         _staticSceneManagerAddress = staticSceneManagerAddress;
@@ -60,7 +61,7 @@ public class SceneManager
     /// <summary>
     /// Gets the address of the scene manager.
     /// </summary>
-    public nuint Address => _memory.FollowStaticAddressOffsets(_staticSceneManagerAddress, _sceneManagerOffsets);
+    public override nuint Address => _memory.FollowStaticAddressOffsets(_staticSceneManagerAddress, _sceneManagerOffsets);
 
     /// <summary>
     /// Gets the player list.

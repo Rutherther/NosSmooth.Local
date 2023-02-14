@@ -40,6 +40,9 @@ internal class PeriodicHook : IPeriodicHook
 
     private NosAsmHook<IPeriodicHook.PeriodicDelegate> _hook = null!;
 
+    /// <inheritdoc/>
+    public bool IsUsable => WrapperFunction.IsPresent;
+
     /// <inheritdoc />
     public string Name => IHookManager.PeriodicName;
 
@@ -47,7 +50,7 @@ internal class PeriodicHook : IPeriodicHook
     public bool IsEnabled => _hook.Hook.IsEnabled;
 
     /// <inheritdoc />
-    public IPeriodicHook.PeriodicDelegate WrapperFunction => OriginalFunction;
+    public Optional<IPeriodicHook.PeriodicDelegate> WrapperFunction => OriginalFunction;
 
     /// <inheritdoc/>
     public IPeriodicHook.PeriodicDelegate OriginalFunction => throw new InvalidOperationException

@@ -22,7 +22,7 @@ public interface INostaleHook<TFunction, TWrapperFunction, TEventArgs> : INostal
     /// <summary>
     /// Gets the wrapper function delegate.
     /// </summary>
-    public TWrapperFunction WrapperFunction { get; }
+    public Optional<TWrapperFunction> WrapperFunction { get; }
 
     /// <summary>
     /// Gets the original function delegate.
@@ -40,6 +40,11 @@ public interface INostaleHook<TFunction, TWrapperFunction, TEventArgs> : INostal
 /// </summary>
 public interface INostaleHook
 {
+    /// <summary>
+    /// Gets whether the wrapper function is present and usable.
+    /// </summary>
+    public bool IsUsable { get; }
+
     /// <summary>
     /// Gets the name of the function.
     /// </summary>

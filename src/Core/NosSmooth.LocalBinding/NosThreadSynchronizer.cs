@@ -7,6 +7,7 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using NosSmooth.LocalBinding.Errors;
 using NosSmooth.LocalBinding.Hooks;
 using NosSmooth.LocalBinding.Options;
 using Remora.Results;
@@ -18,7 +19,7 @@ namespace NosSmooth.LocalBinding;
 /// </summary>
 public class NosThreadSynchronizer
 {
-    private readonly IPeriodicHook _periodicHook;
+    private readonly Optional<IPeriodicHook> _periodicHook;
     private readonly ILogger<NosThreadSynchronizer> _logger;
     private readonly NosThreadSynchronizerOptions _options;
     private readonly ConcurrentQueue<SyncOperation> _queuedOperations;
@@ -32,7 +33,7 @@ public class NosThreadSynchronizer
     /// <param name="options">The options.</param>
     public NosThreadSynchronizer
     (
-        IPeriodicHook periodicHook,
+        Optional<IPeriodicHook> periodicHook,
         ILogger<NosThreadSynchronizer> logger,
         IOptions<NosThreadSynchronizerOptions> options
     )
@@ -51,9 +52,12 @@ public class NosThreadSynchronizer
     /// <summary>
     /// Start the synchronizer operation.
     /// </summary>
-    public void StartSynchronizer()
+    /// <returns>The result, successful if periodic hook is present.</returns>
+    public Result StartSynchronizer()
     {
-        _periodicHook.Called += PeriodicCall;
+        return _periodicHook.TryDo(h => h.Called += PeriodicCall)
+            ? Result.FromSuccess()
+            : new NeededModulesNotInitializedError("Could not start synchronizer, because the periodic hook is not present", IHookManager.PeriodicName);
     }
 
     /// <summary>
@@ -61,7 +65,7 @@ public class NosThreadSynchronizer
     /// </summary>
     public void StopSynchronizer()
     {
-        _periodicHook.Called -= PeriodicCall;
+        _periodicHook.TryDo(h => h.Called -= PeriodicCall);
     }
 
     private void PeriodicCall(object? owner, System.EventArgs eventArgs)

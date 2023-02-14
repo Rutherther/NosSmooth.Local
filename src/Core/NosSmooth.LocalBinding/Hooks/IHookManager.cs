@@ -56,37 +56,37 @@ public interface IHookManager
     /// <summary>
     /// Gets the packet send hook.
     /// </summary>
-    public IPacketSendHook PacketSend { get; }
+    public Optional<IPacketSendHook> PacketSend { get; }
 
     /// <summary>
     /// Gets the packet receive hook.
     /// </summary>
-    public IPacketReceiveHook PacketReceive { get; }
+    public Optional<IPacketReceiveHook> PacketReceive { get; }
 
     /// <summary>
     /// Gets the player walk hook.
     /// </summary>
-    public IPlayerWalkHook PlayerWalk { get; }
+    public Optional<IPlayerWalkHook> PlayerWalk { get; }
 
     /// <summary>
     /// Gets the entity follow hook.
     /// </summary>
-    public IEntityFollowHook EntityFollow { get; }
+    public Optional<IEntityFollowHook> EntityFollow { get; }
 
     /// <summary>
     /// Gets the entity unfollow hook.
     /// </summary>
-    public IEntityUnfollowHook EntityUnfollow { get; }
+    public Optional<IEntityUnfollowHook> EntityUnfollow { get; }
 
     /// <summary>
     /// Gets the player walk hook.
     /// </summary>
-    public IPetWalkHook PetWalk { get; }
+    public Optional<IPetWalkHook> PetWalk { get; }
 
     /// <summary>
     /// Gets the entity focus hook.
     /// </summary>
-    public IEntityFocusHook EntityFocus { get; }
+    public Optional<IEntityFocusHook> EntityFocus { get; }
 
     /// <summary>
     /// Gets the periodic function hook.
@@ -95,7 +95,7 @@ public interface IHookManager
     /// May be any function that is called periodically.
     /// This is used for synchronizing using <see cref="NosThreadSynchronizer"/>.
     /// </remarks>
-    public IPeriodicHook Periodic { get; }
+    public Optional<IPeriodicHook> Periodic { get; }
 
     /// <summary>
     /// Gets all of the hooks.
@@ -139,4 +139,36 @@ public interface IHookManager
     /// Enable all hooks.
     /// </summary>
     public void EnableAll();
+
+    /// <summary>
+    /// Checks whether hook of the given type is loaded (there were no errors in finding the function).
+    /// </summary>
+    /// <typeparam name="THook">The type of the hook.</typeparam>
+    /// <returns>Whether the hook is loaded/present.</returns>
+    public bool IsHookLoaded<THook>()
+        where THook : INostaleHook;
+
+    /// <summary>
+    /// Checks whether hook of the given type is loaded (there were no errors in finding the function)
+    /// and that the wrapper function is present/usable.
+    /// </summary>
+    /// <typeparam name="THook">The type of the hook.</typeparam>
+    /// <returns>Whether the hook is loaded/present and usable.</returns>
+    public bool IsHookUsable<THook>()
+        where THook : INostaleHook;
+
+    /// <summary>
+    /// Checks whether hook of the given type is loaded (there were no errors in finding the function).
+    /// </summary>
+    /// <param name="hookType">The type of the hook.</typeparam>
+    /// <returns>Whether the hook is loaded/present.</returns>
+    public bool IsHookLoaded(Type hookType);
+
+    /// <summary>
+    /// Checks whether hook of the given type is loaded (there were no errors in finding the function)
+    /// and that the wrapper function is present/usable.
+    /// </summary>
+    /// <param name="hookType">The type of the hook.</typeparam>
+    /// <returns>Whether the hook is loaded/present and usable.</returns>
+    public bool IsHookUsable(Type hookType);
 }

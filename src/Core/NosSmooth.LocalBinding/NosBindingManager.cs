@@ -12,6 +12,7 @@ using NosSmooth.LocalBinding.Hooks;
 using NosSmooth.LocalBinding.Hooks.Implementations;
 using NosSmooth.LocalBinding.Objects;
 using NosSmooth.LocalBinding.Options;
+using NosSmooth.LocalBinding.Structs;
 using Reloaded.Hooks;
 using Reloaded.Hooks.Definitions;
 using Reloaded.Hooks.Definitions.Helpers;
@@ -97,6 +98,14 @@ public class NosBindingManager : IDisposable
             _ => (Result)new AggregateError(errorResults)
         };
     }
+
+    /// <summary>
+    /// Gets whether a hook or browser module is present.
+    /// </summary>
+    /// <typeparam name="TModule">The type of the module.</typeparam>
+    /// <returns>Whether the module is present.</returns>
+    public bool IsModulePresent<TModule>()
+        => _hookManager.IsHookUsable(typeof(TModule)) || _browserManager.IsModuleLoaded(typeof(TModule));
 
     /// <inheritdoc />
     public void Dispose()

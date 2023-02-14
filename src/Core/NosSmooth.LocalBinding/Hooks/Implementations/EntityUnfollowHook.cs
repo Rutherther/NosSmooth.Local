@@ -37,9 +37,9 @@ internal class EntityUnfollowHook : CancelableNostaleHook<IEntityUnfollowHook.En
         return hook;
     }
 
-    private readonly PlayerManager _playerManager;
+    private readonly Optional<PlayerManager> _playerManager;
 
-    private EntityUnfollowHook(PlayerManager playerManager)
+    private EntityUnfollowHook(Optional<PlayerManager> playerManager)
     {
         _playerManager = playerManager;
     }
@@ -48,8 +48,8 @@ internal class EntityUnfollowHook : CancelableNostaleHook<IEntityUnfollowHook.En
     public override string Name => IHookManager.EntityUnfollowName;
 
     /// <inheritdoc />
-    public override IEntityUnfollowHook.EntityUnfollowWrapperDelegate WrapperFunction
-        => () => OriginalFunction(_playerManager.Address);
+    public override Optional<IEntityUnfollowHook.EntityUnfollowWrapperDelegate> WrapperFunction
+    => _playerManager.Map<IEntityUnfollowHook.EntityUnfollowWrapperDelegate>(playerManager => () => OriginalFunction(playerManager.Address));
 
     /// <inheritdoc />
     protected override IEntityUnfollowHook.EntityUnfollowDelegate WrapWithCalling(IEntityUnfollowHook.EntityUnfollowDelegate function)
