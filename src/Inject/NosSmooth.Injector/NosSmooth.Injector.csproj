@@ -5,8 +5,8 @@
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb;.dll</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <VersionPrefix>1.1.1</VersionPrefix>
-    <PackageReleaseNotes>Include nethost.dll inside of the injector.</PackageReleaseNotes>
+    <VersionPrefix>1.1.2</VersionPrefix>
+    <PackageReleaseNotes>Update Inject.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

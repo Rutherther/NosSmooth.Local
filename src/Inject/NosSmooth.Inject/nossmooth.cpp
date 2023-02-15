@@ -84,7 +84,7 @@ load_assembly_and_get_function_pointer_fn get_dotnet_load_assembly(const char_t*
     int rc = init_fptr(config_path, nullptr, &cxt);
     if (rc > 1 || cxt == nullptr)
     {
-        std::cerr << "Init failed: " << std::hex << std::showbase << rc << std::endl;
+        std::cerr << "Init failed " << config_path << " " << std::hex << std::showbase << rc << std::endl;
         close_fptr(cxt);
         return nullptr;
     }
@@ -95,7 +95,7 @@ load_assembly_and_get_function_pointer_fn get_dotnet_load_assembly(const char_t*
         hdt_load_assembly_and_get_function_pointer,
         &load_assembly_and_get_function_pointer);
     if (rc != 0 || load_assembly_and_get_function_pointer == nullptr)
-        std::cerr << "Get delegate failed: " << std::hex << std::showbase << rc << std::endl;
+        std::cerr << "Get delegate failed " << config_path << " " << std::hex << std::showbase << rc << std::endl;
 
     close_fptr(cxt);
     return (load_assembly_and_get_function_pointer_fn)load_assembly_and_get_function_pointer;
