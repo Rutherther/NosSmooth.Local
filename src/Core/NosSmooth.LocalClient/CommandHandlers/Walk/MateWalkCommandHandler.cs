@@ -1,5 +1,5 @@
 ﻿//
-//  PetWalkCommandHandler.cs
+//  MateWalkCommandHandler.cs
 //
 //  Copyright (c) František Boháček. All rights reserved.
 //  Licensed under the MIT license. See LICENSE file in the project root for full license information.
@@ -20,7 +20,7 @@ namespace NosSmooth.LocalClient.CommandHandlers.Walk;
 /// <summary>
 /// Handles <see cref="PetWalkCommand"/>.
 /// </summary>
-public class PetWalkCommandHandler : ICommandHandler<PetWalkCommand>
+public class MateWalkCommandHandler : ICommandHandler<MateWalkCommand>
 {
     /// <summary>
     /// Group that is used for <see cref="TakeControlCommand"/>.
@@ -35,7 +35,7 @@ public class PetWalkCommandHandler : ICommandHandler<PetWalkCommand>
     private readonly WalkCommandHandlerOptions _options;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PetWalkCommandHandler"/> class.
+    /// Initializes a new instance of the <see cref="MateWalkCommandHandler"/> class.
     /// </summary>
     /// <param name="petWalkHook">The pet walk hook.</param>
     /// <param name="petManagerList">The pet manager list.</param>
@@ -43,7 +43,7 @@ public class PetWalkCommandHandler : ICommandHandler<PetWalkCommand>
     /// <param name="userActionDetector">The user action detector.</param>
     /// <param name="nostaleClient">The nostale client.</param>
     /// <param name="options">The options.</param>
-    public PetWalkCommandHandler
+    public MateWalkCommandHandler
     (
         IPetWalkHook petWalkHook,
         PetManagerList petManagerList,
@@ -62,13 +62,13 @@ public class PetWalkCommandHandler : ICommandHandler<PetWalkCommand>
     }
 
     /// <inheritdoc/>
-    public async Task<Result> HandleCommand(PetWalkCommand command, CancellationToken ct = default)
+    public async Task<Result> HandleCommand(MateWalkCommand command, CancellationToken ct = default)
     {
-        if (_petManagerList.Length < command.PetSelector + 1)
+        PetManager? selectedPet = _petManagerList.FirstOrDefault(x => x.Pet.Id == command.MateId);
+        if (selectedPet is null)
         {
-            return new NotFoundError("Could not find the pet using the given selector.");
+            return new NotFoundError($"Mate with id {command.MateId} was not found in the pet manager list.");
         }
-        var petManager = _petManagerList[command.PetSelector];
 
         var handler = new ControlCommandWalkHandler
         (
@@ -78,11 +78,11 @@ public class PetWalkCommandHandler : ICommandHandler<PetWalkCommand>
                 (
                     () => _userActionDetector.NotUserAction<Result<bool>>
                     (
-                        () => _petWalkHook.WrapperFunction.Get()(petManager, (ushort)x, (ushort)y)
+                        () => _petWalkHook.WrapperFunction.Get()(selectedPet, (ushort)x, (ushort)y)
                     ),
                     ct
                 ),
-            petManager,
+            selectedPet,
             _options
         );
 
@@ -92,7 +92,7 @@ public class PetWalkCommandHandler : ICommandHandler<PetWalkCommand>
             command.TargetY,
             command.ReturnDistanceTolerance,
             command,
-            PetWalkControlGroup + "_" + command.PetSelector,
+            PetWalkControlGroup + "_" + command.MateId,
             ct
         );
     }

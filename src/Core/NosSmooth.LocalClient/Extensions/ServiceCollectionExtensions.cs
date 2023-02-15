@@ -33,7 +33,7 @@ public static class ServiceCollectionExtensions
             .AddTakeControlCommand()
             .AddCommandHandler<AttackCommandHandler>()
             .AddCommandHandler<PlayerWalkCommandHandler>()
-            .AddCommandHandler<PetWalkCommandHandler>();
+            .AddCommandHandler<MateWalkCommandHandler>();
         serviceCollection.TryAddSingleton<NostaleLocalClient>();
         serviceCollection.TryAddSingleton<INostaleClient>(p => p.GetRequiredService<NostaleLocalClient>());
 
