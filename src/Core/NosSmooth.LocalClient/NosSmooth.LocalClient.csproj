@@ -5,8 +5,8 @@
         <Nullable>enable</Nullable>
         <LangVersion>10</LangVersion>
         <TargetFramework>net7.0</TargetFramework>
-        <VersionPrefix>2.1.0</VersionPrefix>
-        <PackageReleaseNotes>Add support for new MateWalkCommand.</PackageReleaseNotes>
+        <VersionPrefix>2.2.0</VersionPrefix>
+        <PackageReleaseNotes>Add support for optional hooks and modules in walk commands.</PackageReleaseNotes>
     </PropertyGroup>
 
     <ItemGroup>
