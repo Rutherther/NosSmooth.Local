@@ -11,6 +11,7 @@ using NosSmooth.Core.Commands.Control;
 using NosSmooth.Core.Commands.Walking;
 using NosSmooth.Core.Extensions;
 using NosSmooth.LocalBinding;
+using NosSmooth.LocalBinding.Errors;
 using NosSmooth.LocalBinding.Hooks;
 using NosSmooth.LocalBinding.Objects;
 using NosSmooth.LocalBinding.Structs;
@@ -28,8 +29,8 @@ public class PlayerWalkCommandHandler : ICommandHandler<PlayerWalkCommand>
     /// </summary>
     public const string PlayerWalkControlGroup = "PlayerWalk";
 
-    private readonly PlayerManager _playerManager;
-    private readonly IPlayerWalkHook _playerWalkHook;
+    private readonly Optional<PlayerManager> _playerManager;
+    private readonly Optional<IPlayerWalkHook> _playerWalkHook;
     private readonly NosThreadSynchronizer _threadSynchronizer;
     private readonly UserActionDetector _userActionDetector;
     private readonly INostaleClient _nostaleClient;
@@ -46,8 +47,8 @@ public class PlayerWalkCommandHandler : ICommandHandler<PlayerWalkCommand>
     /// <param name="options">The options.</param>
     public PlayerWalkCommandHandler
     (
-        PlayerManager playerManager,
-        IPlayerWalkHook playerWalkHook,
+        Optional<PlayerManager> playerManager,
+        Optional<IPlayerWalkHook> playerWalkHook,
         NosThreadSynchronizer threadSynchronizer,
         UserActionDetector userActionDetector,
         INostaleClient nostaleClient,
@@ -65,16 +66,32 @@ public class PlayerWalkCommandHandler : ICommandHandler<PlayerWalkCommand>
     /// <inheritdoc/>
     public async Task<Result> HandleCommand(PlayerWalkCommand command, CancellationToken ct = default)
     {
+        if (!_playerManager.TryGet(out var playerManager))
+        {
+            return new NeededModulesNotInitializedError
+                ("The player walk command cannot be executed as PlayerManager is not present.", "PlayerManager");
+        }
+
+        if (!_playerWalkHook.TryGet(out var playerWalkHook))
+        {
+            return
+                new NeededModulesNotInitializedError
+                (
+                    "The player walk command cannot be executed as PlayerWalkHook is not present.",
+                    IHookManager.CharacterWalkName
+                );
+        }
+
         var handler = new ControlCommandWalkHandler
         (
             _nostaleClient,
             async (x, y, ct)
                 => await _threadSynchronizer.SynchronizeAsync
                 (
-                    () => _userActionDetector.NotUserWalk(_playerWalkHook, x, y),
+                    () => _userActionDetector.NotUserWalk(playerWalkHook, x, y),
                     ct
                 ),
-            _playerManager,
+            playerManager,
             _options
         );
 

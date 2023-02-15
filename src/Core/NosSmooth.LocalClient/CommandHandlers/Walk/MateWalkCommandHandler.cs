@@ -28,7 +28,7 @@ public class MateWalkCommandHandler : ICommandHandler<MateWalkCommand>
     /// </summary>
     public const string PetWalkControlGroup = "PetWalk";
 
-    private readonly IPetWalkHook _petWalkHook;
+    private readonly Optional<IPetWalkHook> _petWalkHook;
     private readonly Optional<PetManagerList> _petManagerList;
     private readonly NosThreadSynchronizer _threadSynchronizer;
     private readonly UserActionDetector _userActionDetector;
@@ -46,7 +46,7 @@ public class MateWalkCommandHandler : ICommandHandler<MateWalkCommand>
     /// <param name="options">The options.</param>
     public MateWalkCommandHandler
     (
-        IPetWalkHook petWalkHook,
+        Optional<IPetWalkHook> petWalkHook,
         Optional<PetManagerList> petManagerList,
         NosThreadSynchronizer threadSynchronizer,
         UserActionDetector userActionDetector,
@@ -67,11 +67,16 @@ public class MateWalkCommandHandler : ICommandHandler<MateWalkCommand>
     {
         if (!_petManagerList.TryGet(out var petManagerList))
         {
-            return Result.FromError
-            (
+            return
                 new NeededModulesNotInitializedError
-                    ("The mate walk command cannot be executed as PetManagerList is not present.", "PetManagerList")
-            );
+                    ("The mate walk command cannot be executed as PetManagerList is not present.", "PetManagerList");
+        }
+
+        if (!_petWalkHook.TryGet(out var petWalkHook))
+        {
+            return
+                new NeededModulesNotInitializedError
+                    ("The mate walk command cannot be executed as PetWalkHook is not present.", IHookManager.PetWalkName);
         }
 
         PetManager? selectedPet = petManagerList.FirstOrDefault(x => x.Pet.Id == command.MateId);
@@ -88,7 +93,7 @@ public class MateWalkCommandHandler : ICommandHandler<MateWalkCommand>
                 (
                     () => _userActionDetector.NotUserAction<Result<bool>>
                     (
-                        () => _petWalkHook.WrapperFunction.Get()(selectedPet, (ushort)x, (ushort)y)
+                        () => petWalkHook.WrapperFunction.Get()(selectedPet, (ushort)x, (ushort)y)
                     ),
                     ct
                 ),
