@@ -10,6 +10,7 @@ using NosSmooth.Core.Commands;
 using NosSmooth.Core.Commands.Control;
 using NosSmooth.Core.Commands.Walking;
 using NosSmooth.LocalBinding;
+using NosSmooth.LocalBinding.Errors;
 using NosSmooth.LocalBinding.Hooks;
 using NosSmooth.LocalBinding.Objects;
 using NosSmooth.LocalBinding.Structs;
@@ -28,7 +29,7 @@ public class MateWalkCommandHandler : ICommandHandler<MateWalkCommand>
     public const string PetWalkControlGroup = "PetWalk";
 
     private readonly IPetWalkHook _petWalkHook;
-    private readonly PetManagerList _petManagerList;
+    private readonly Optional<PetManagerList> _petManagerList;
     private readonly NosThreadSynchronizer _threadSynchronizer;
     private readonly UserActionDetector _userActionDetector;
     private readonly INostaleClient _nostaleClient;
@@ -46,7 +47,7 @@ public class MateWalkCommandHandler : ICommandHandler<MateWalkCommand>
     public MateWalkCommandHandler
     (
         IPetWalkHook petWalkHook,
-        PetManagerList petManagerList,
+        Optional<PetManagerList> petManagerList,
         NosThreadSynchronizer threadSynchronizer,
         UserActionDetector userActionDetector,
         INostaleClient nostaleClient,
@@ -64,7 +65,16 @@ public class MateWalkCommandHandler : ICommandHandler<MateWalkCommand>
     /// <inheritdoc/>
     public async Task<Result> HandleCommand(MateWalkCommand command, CancellationToken ct = default)
     {
-        PetManager? selectedPet = _petManagerList.FirstOrDefault(x => x.Pet.Id == command.MateId);
+        if (!_petManagerList.TryGet(out var petManagerList))
+        {
+            return Result.FromError
+            (
+                new NeededModulesNotInitializedError
+                    ("The mate walk command cannot be executed as PetManagerList is not present.", "PetManagerList")
+            );
+        }
+
+        PetManager? selectedPet = petManagerList.FirstOrDefault(x => x.Pet.Id == command.MateId);
         if (selectedPet is null)
         {
             return new NotFoundError($"Mate with id {command.MateId} was not found in the pet manager list.");
