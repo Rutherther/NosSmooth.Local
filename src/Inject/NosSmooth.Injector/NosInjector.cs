@@ -47,17 +47,19 @@ public class NosInjector
     /// <param name="dllPath">The absolute path to the dll to inject.</param>
     /// <param name="classPath">The full path to the class. Such as "MyLibrary.DllMain, MyLibrary".</param>
     /// <param name="methodName">The name of the method to execute. The method should return void and have no parameters.</param>
+    /// <param name="data">The data to pass to the process. The array will be allocated inside the target process.</param>
     /// <returns>A result that may or may not have succeeded.</returns>
-    public Result Inject
+    public Result<int> Inject
     (
         int processId,
         string dllPath,
         string classPath,
-        string methodName = "Main"
+        string methodName = "Main",
+        byte[]? data = default
     )
     {
         using var process = Process.GetProcessById(processId);
-        return Inject(process, dllPath, classPath, methodName);
+        return Inject(process, dllPath, classPath, methodName, data);
     }
 
     /// <summary>
@@ -70,13 +72,15 @@ public class NosInjector
     /// <param name="dllPath">The absolute path to the dll to inject.</param>
     /// <param name="classPath">The full path to the class. Such as "MyLibrary.DllMain, MyLibrary".</param>
     /// <param name="methodName">The name of the method to execute. The method should return void and have no parameters.</param>
+    /// <param name="data">The data to pass to the process. The array will be allocated inside the target process.</param>
     /// <returns>A result that may or may not have succeeded.</returns>
-    public Result Inject
+    public Result<int> Inject
     (
         Process process,
         string dllPath,
         string classPath,
-        string methodName = "Main"
+        string methodName = "Main",
+        byte[]? data = default
     )
     {
         try
@@ -100,7 +104,7 @@ public class NosInjector
 
             if (!netHostInjectionResult.IsSuccess)
             {
-                return netHostInjectionResult;
+                return Result<int>.FromError(netHostInjectionResult);
             }
 
             var directoryName = Path.GetDirectoryName(dllPath);
@@ -121,6 +125,7 @@ public class NosInjector
             using var classPathMemory = AllocateString(memory, classPath);
             using var methodNameMemory = AllocateString(memory, methodName);
             using var runtimePathMemory = AllocateString(memory, runtimePath);
+            using var userDataMemory = Allocate(memory, data ?? Array.Empty<byte>());
 
             if (!dllPathMemory.Allocated || !classPathMemory.Allocated || !methodNameMemory.Allocated
                 || !runtimePathMemory.Allocated)
@@ -133,7 +138,8 @@ public class NosInjector
                 LibraryPath = (int)dllPathMemory.Pointer,
                 MethodName = (int)methodNameMemory.Pointer,
                 RuntimeConfigPath = (int)runtimePathMemory.Pointer,
-                TypePath = (int)classPathMemory.Pointer
+                TypePath = (int)classPathMemory.Pointer,
+                UserData = (int)userDataMemory.Pointer
             };
 
             var nosSmoothInjectPath = Path.GetFullPath(_options.NosSmoothInjectPath);
@@ -153,7 +159,7 @@ public class NosInjector
 
             injector.Eject(nosSmoothInjectPath);
 
-            if (functionResult != 1)
+            if (functionResult < 3)
             {
                 return new InjectionFailedError
                 (
@@ -163,7 +169,7 @@ public class NosInjector
                 );
             }
 
-            return Result.FromSuccess();
+            return functionResult - 3;
         }
         catch (UnauthorizedAccessException)
         {
@@ -214,6 +220,23 @@ public class NosInjector
 
         memory.SafeWriteRaw(allocated + (nuint)bytes.Length, new byte[] { 0 });
         memory.SafeWriteRaw(allocated, bytes);
+        return new ManagedMemoryAllocation(memory, allocated);
+    }
+
+    private ManagedMemoryAllocation Allocate(IMemory memory, byte[] data)
+    {
+        if (data.Length == 0)
+        {
+            return new ManagedMemoryAllocation(memory, nuint.Zero);
+        }
+
+        var allocated = memory.Allocate(data.Length);
+        if (allocated == nuint.Zero)
+        {
+            return new ManagedMemoryAllocation(memory, allocated);
+        }
+
+        memory.SafeWriteRaw(allocated, data);
         return new ManagedMemoryAllocation(memory, allocated);
     }
 }

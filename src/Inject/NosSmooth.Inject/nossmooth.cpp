@@ -105,17 +105,17 @@ int LoadAndCallMethod(LoadParams* params)
 {
     if (!load_hostfxr())
     {
-        return 2;
+        return 0;
     }
 
     load_assembly_and_get_function_pointer_fn load_assembly_and_get_function_pointer = nullptr;
     load_assembly_and_get_function_pointer = get_dotnet_load_assembly(params->runtimeConfigPath);
     if (load_assembly_and_get_function_pointer == nullptr)
     {
-        return 3;
+        return 1;
     }
 
-    typedef void (CORECLR_DELEGATE_CALLTYPE* main_entry_point_fn)();
+    typedef int (CORECLR_DELEGATE_CALLTYPE* main_entry_point_fn)(char* data);
     main_entry_point_fn main = nullptr;
     int rc = load_assembly_and_get_function_pointer(
         params->libraryPath,
@@ -123,12 +123,11 @@ int LoadAndCallMethod(LoadParams* params)
         params->methodName,
         UNMANAGEDCALLERSONLY_METHOD,
         nullptr,
-        (void**)&main);
+        reinterpret_cast<void**>(&main));
     if (rc != 0 || main == nullptr)
     {
-        return 4;
+        return 2;
     }
 
-    main();
-    return 1;
+    return main(params->userData) + 3;
 }

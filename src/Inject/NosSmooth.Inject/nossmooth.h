@@ -8,6 +8,7 @@ struct LoadParams
     wchar_t *runtimeConfigPath;
     wchar_t *typePath;
     wchar_t *methodName;
+    char *userData;
 };
 #pragma pack(pop)
 #define DllExport extern "C" __declspec( dllexport )

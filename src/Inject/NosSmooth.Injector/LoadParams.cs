@@ -40,5 +40,10 @@ namespace NosSmooth.Injector
         /// The name of the method to execute.
         /// </summary>
         public int MethodName;
+
+        /// <summary>
+        /// The user data to pass.
+        /// </summary>
+        public int UserData;
     }
 }

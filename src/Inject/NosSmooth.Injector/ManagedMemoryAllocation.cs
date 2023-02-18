@@ -41,7 +41,10 @@ internal class ManagedMemoryAllocation : IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        _memory.Free(Pointer);
-        Pointer = nuint.Zero;
+        if (Allocated)
+        {
+            _memory.Free(Pointer);
+            Pointer = nuint.Zero;
+        }
     }
 }

@@ -37,7 +37,7 @@ namespace NosSmooth.Injector.CLI.Commands
         /// <param name="methodName">The name of the UnmanagedCallersOnly method. Default is Main.</param>
         /// <returns>A result that may or may not have succeeded.</returns>
         [Command("inject")]
-        public Task<Result> Inject
+        public async Task<Result> Inject
         (
             [Description("The id of the process to inject into.")]
             string process,
@@ -51,18 +51,32 @@ namespace NosSmooth.Injector.CLI.Commands
         {
             if (!int.TryParse(process, out var processId))
             {
-                var foundProcess = Process.GetProcesses().FirstOrDefault(x => x.ProcessName.Contains(process, StringComparison.OrdinalIgnoreCase));
+                var foundProcess = Process.GetProcesses().FirstOrDefault
+                    (x => x.ProcessName.Contains(process, StringComparison.OrdinalIgnoreCase));
                 if (foundProcess is null)
                 {
-                    return Task.FromResult(Result.FromError(new NotFoundError("Could not find the given process.")));
+                    return Result.FromError(new NotFoundError("Could not find the given process."));
                 }
 
                 processId = foundProcess.Id;
             }
 
             var dllName = Path.GetFileNameWithoutExtension(dllPath);
-            return Task.FromResult
-                (_injector.Inject(processId, dllPath, typeName ?? $"{dllName}.DllMain, {dllName}", methodName ?? "Main"));
+            var result = _injector.Inject
+            (
+                processId,
+                dllPath,
+                typeName ?? $"{dllName}.DllMain, {dllName}",
+                methodName ?? "Main",
+                new byte[] { 1, 2, 3, 4, 5 }
+            );
+            if (!result.IsSuccess)
+            {
+                return Result.FromError(result);
+            }
+
+            Console.WriteLine($"Got {result.Entity} from the managed injected dll.");
+            return Result.FromSuccess();
         }
     }
 }

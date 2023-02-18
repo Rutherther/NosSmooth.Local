@@ -12,14 +12,9 @@ namespace NosSmooth.Injector;
 public enum InjectionResult
 {
     /// <summary>
-    /// Successful result.
-    /// </summary>
-    Ok = 1,
-
-    /// <summary>
     /// Hostfxr.dll was not found, is .NET installed? It should be as this is a .NET application injecting the dll...
     /// </summary>
-    HostfxrNotFound = 2,
+    HostfxrNotFound = 0,
 
     /// <summary>
     /// A runtimeconfig.json of the assembly to be injected was not found.
@@ -28,7 +23,7 @@ public enum InjectionResult
     /// Be sure to include <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
     /// in a library that will be injected.
     /// </remarks>
-    RuntimeConfigNotFound = 3,
+    RuntimeConfigNotFound = 1,
 
     /// <summary>
     /// The specified class or type was not found.
@@ -37,5 +32,5 @@ public enum InjectionResult
     /// Be sure to put it in this format: "namespace.type.method, assembly",
     /// see samples.
     /// </remarks>
-    ClassOrMethodNotFound = 4
+    ClassOrMethodNotFound = 2
 }
