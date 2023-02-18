@@ -24,7 +24,7 @@ public class DllMain
     /// Represents the dll entrypoint method.
     /// </summary>
     [UnmanagedCallersOnly(EntryPoint = "Main")]
-    public static void Main()
+    public static int Main(nuint data)
     {
         AllocConsole();
         new Thread(() =>
@@ -38,5 +38,6 @@ public class DllMain
                 Console.WriteLine(e.ToString());
             }
         }).Start();
+        return 0;
     }
 }

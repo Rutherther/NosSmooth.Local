@@ -22,11 +22,12 @@ public class DllMain
     /// The main entrypoint method of the dll.
     /// </summary>
     [UnmanagedCallersOnly(EntryPoint = "Main")]
-    public static void Main()
+    public static int Main(nuint data)
     {
         AllocConsole();
         Console.WriteLine("Hello from SimpleChat DllMain entry point.");
 
         new Thread(() => new SimpleChat().RunAsync().GetAwaiter().GetResult()).Start();
+        return 0;
     }
 }

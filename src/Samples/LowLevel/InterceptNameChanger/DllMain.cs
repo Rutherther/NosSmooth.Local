@@ -24,7 +24,7 @@ namespace InterceptNameChanger
         /// The main entrypoint method of the dll.
         /// </summary>
         [UnmanagedCallersOnly(EntryPoint = "Main")]
-        public static void Main()
+        public static int Main(nuint data)
         {
             AllocConsole();
             Console.WriteLine("Hello from InterceptNameChanger DllMain entry point.");
@@ -40,6 +40,7 @@ namespace InterceptNameChanger
                     Console.WriteLine(e.ToString());
                 }
             }).Start();
+            return 0;
         }
     }
 }
