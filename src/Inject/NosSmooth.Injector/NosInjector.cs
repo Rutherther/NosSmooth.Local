@@ -42,6 +42,14 @@ public class NosInjector
     /// </summary>
     /// <remarks>
     /// The dll must also have .runtimeconfig.json present next to the dll.
+    ///
+    /// The method you want to call has to be marked with UnmanagedCallersOnly,
+    /// has to be the default convention, return an integer (that will be returned out of this method)
+    /// and accept one argument. That argument should accept a pointer do byte array containing data from <paramref name="data"/>.
+    /// One possibility is to use <see cref="nuint"/>.
+    ///
+    /// Parsing data is up to the user, no format is specified, the array length is not passed to the
+    /// injected dll, so you better know the size prior to calling or store the size in the beginning of the array.
     /// </remarks>
     /// <param name="processId">The id of the process to inject to.</param>
     /// <param name="dllPath">The absolute path to the dll to inject.</param>
@@ -67,6 +75,14 @@ public class NosInjector
     /// </summary>
     /// <remarks>
     /// The dll must also have .runtimeconfig.json present next to the dll.
+    ///
+    /// The method you want to call has to be marked with UnmanagedCallersOnly,
+    /// has to be the default convention, return an integer (that will be returned out of this method)
+    /// and accept one argument. That argument should accept a pointer do byte array containing data from <paramref name="data"/>.
+    /// One possibility is to use <see cref="nuint"/>.
+    ///
+    /// Parsing data is up to the user, no format is specified, the array length is not passed to the
+    /// injected dll, so you better know the size prior to calling or store the size in the beginning of the array.
     /// </remarks>
     /// <param name="process">The process to inject to.</param>
     /// <param name="dllPath">The absolute path to the dll to inject.</param>
