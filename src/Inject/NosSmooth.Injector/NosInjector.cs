@@ -67,7 +67,14 @@ public class NosInjector
     )
     {
         using var process = Process.GetProcessById(processId);
-        return Inject(process, dllPath, classPath, methodName, data);
+        return Inject
+        (
+            process,
+            dllPath,
+            classPath,
+            methodName,
+            data
+        );
     }
 
     /// <summary>
@@ -113,8 +120,8 @@ public class NosInjector
             var netHostInjectionResult = InjectNetHostDll
             (
                 injector,
-                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-                System.IO.Path.GetDirectoryName(dllPath),
+                Path.GetFullPath("."),
+                System.IO.Path.GetDirectoryName(Path.GetFullPath(dllPath)),
                 System.IO.Path.GetDirectoryName(process.MainModule?.FileName)
             );
 
@@ -204,6 +211,7 @@ public class NosInjector
     private Result InjectNetHostDll(Reloaded.Injector.Injector injector, params string?[] pathsToSearch)
     {
         string? foundPath = pathsToSearch
+            .Where(x => !string.IsNullOrEmpty(x))
             .Select(x => Path.Join(x, "nethost.dll"))
             .Select(Path.GetFullPath)
             .FirstOrDefault(File.Exists);
