@@ -205,6 +205,7 @@ public class NosInjector
     {
         string? foundPath = pathsToSearch
             .Select(x => Path.Join(x, "nethost.dll"))
+            .Select(Path.GetFullPath)
             .FirstOrDefault(File.Exists);
 
         if (foundPath is null)
